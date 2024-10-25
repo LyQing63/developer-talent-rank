@@ -9,5 +9,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2024-10-25 11:53:48
 */
 public interface UserService extends IService<User> {
-
+    User getUserFromGithub(String account);
 }

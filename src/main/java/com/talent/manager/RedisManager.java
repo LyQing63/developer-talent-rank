@@ -18,20 +18,20 @@ public class RedisManager {
     private RedisTemplate<String, User> redisTemplate;
 
     // 设置用户信息缓存
-    public void cacheUserInfo(String userId, User userInfo, long timeout, TimeUnit unit) {
-        String key = USER_CACHE_KEY_PREFIX + userId;
+    public void cacheUserInfo(String account, User userInfo, long timeout, TimeUnit unit) {
+        String key = USER_CACHE_KEY_PREFIX + account;
         redisTemplate.opsForValue().set(key, userInfo, timeout, unit);
     }
 
     // 获取用户信息缓存
-    public Object getUserInfo(Long userId) {
-        String key = USER_CACHE_KEY_PREFIX + userId;
+    public Object getUserInfo(String account) {
+        String key = USER_CACHE_KEY_PREFIX + account;
         return redisTemplate.opsForValue().get(key);
     }
 
     // 删除用户信息缓存
-    public void removeUserInfo(String userId) {
-        String key = USER_CACHE_KEY_PREFIX + userId;
+    public void removeUserInfo(String account) {
+        String key = USER_CACHE_KEY_PREFIX + account;
         redisTemplate.delete(key);
     }
 }
