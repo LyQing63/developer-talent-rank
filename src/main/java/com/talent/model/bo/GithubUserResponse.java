@@ -1,6 +1,5 @@
 package com.talent.model.bo;
 
-import cn.hutool.json.JSONObject;
 import lombok.Data;
 
 import java.util.Date;
