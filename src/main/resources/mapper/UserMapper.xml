@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.talent.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.talent.model.dto.User">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="login" column="login" jdbcType="VARCHAR"/>
+            <result property="nodeid" column="nodeId" jdbcType="VARCHAR"/>
+            <result property="avatarurl" column="avatarUrl" jdbcType="VARCHAR"/>
+            <result property="accounttype" column="accountType" jdbcType="VARCHAR"/>
+            <result property="accountname" column="accountName" jdbcType="VARCHAR"/>
+            <result property="company" column="company" jdbcType="VARCHAR"/>
+            <result property="blog" column="blog" jdbcType="VARCHAR"/>
+            <result property="location" column="location" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="hireable" column="hireable" jdbcType="TINYINT"/>
+            <result property="publicRepos" column="public_repos" jdbcType="INTEGER"/>
+            <result property="publicGists" column="public_gists" jdbcType="INTEGER"/>
+            <result property="accountfollowers" column="accountFollowers" jdbcType="INTEGER"/>
+            <result property="accountfollowing" column="accountFollowing" jdbcType="INTEGER"/>
+            <result property="createtime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updatetime" column="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,login,nodeId,
+        avatarUrl,accountType,accountName,
+        company,blog,location,
+        email,hireable,public_repos,
+        public_gists,accountFollowers,accountFollowing,
+        createTime,updateTime
+    </sql>
+</mapper>
