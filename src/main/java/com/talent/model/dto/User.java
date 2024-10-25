@@ -1,5 +1,7 @@
 package com.talent.model.dto;
 
+import cn.hutool.core.convert.Convert;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -217,5 +219,34 @@ public class User implements Serializable {
         userDto.setUpdatetime(LocalDateTime.parse((String) userAttributes.get("updated_at"), formatter));
         return userDto;
     }
+
+    public static User parseUser(JSONObject user) {
+
+        // 定义日期时间格式
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+        User userDto = new User();
+        Map<String, Object> userAttributes = user.toBean(Map.class);
+        userDto.setId(Long.valueOf((Integer) userAttributes.get("id")));
+        userDto.setLogin(userAttributes.get("login").toString());
+        userDto.setNodeid(userAttributes.get("node_id").toString());
+        userDto.setAvatarurl(userAttributes.get("avatar_url").toString());
+        userDto.setAccounttype(userAttributes.get("type").toString());
+        userDto.setAccountname(userAttributes.get("name").toString());
+        userDto.setCompany(userAttributes.get("company").toString());
+        userDto.setBlog(userAttributes.get("blog").toString());
+        userDto.setLocation(userAttributes.get("location").toString());
+        userDto.setEmail(userAttributes.get("email").toString());
+        userDto.setHireable(Convert.toInt(userAttributes.get("hireable"), 0));
+        userDto.setPublicRepos(Convert.toInt(userAttributes.get("public_repos"), 0));
+        userDto.setPublicGists(Convert.toInt(userAttributes.get("public_gists"), 0));
+        userDto.setAccountfollowers(Convert.toInt(userAttributes.get("followers"), 0));
+        userDto.setAccountfollowing(Convert.toInt(userAttributes.get("following"), 0));
+        userDto.setCreatetime(LocalDateTime.parse(userAttributes.get("created_at").toString(), formatter));
+        userDto.setUpdatetime(LocalDateTime.parse(userAttributes.get("updated_at").toString(), formatter));
+        return userDto;
+    }
+
+
 
 }
