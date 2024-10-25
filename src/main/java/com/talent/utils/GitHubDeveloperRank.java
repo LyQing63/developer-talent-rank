@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 
@@ -139,10 +138,10 @@ public class GitHubDeveloperRank {
             }
         }
 
-        return CollUtil.get(nations, nations.entrySet().stream()
+        return nations.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
-                .orElse("Unknown"));
+                .orElse("Unknown");
     }
 
     private String parseLocation(String location) {
@@ -194,10 +193,10 @@ public class GitHubDeveloperRank {
 
         // 补充领域判断
         if (!languages.isEmpty()) {
-            String primaryLanguage = CollUtil.get(languages, languages.entrySet().stream()
+            String primaryLanguage = languages.entrySet().stream()
                     .max(Map.Entry.comparingByValue())
                     .map(Map.Entry::getKey)
-                    .orElse(null));
+                    .orElse("Unknown");
 
             Map<String, Set<String>> languageDomainMap = new HashMap<>();
             languageDomainMap.put("JavaScript", new HashSet<>(Collections.singletonList("web")));
