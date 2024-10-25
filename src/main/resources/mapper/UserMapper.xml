@@ -16,8 +16,8 @@
             <result property="location" column="location" jdbcType="VARCHAR"/>
             <result property="email" column="email" jdbcType="VARCHAR"/>
             <result property="hireable" column="hireable" jdbcType="TINYINT"/>
-            <result property="publicRepos" column="public_repos" jdbcType="INTEGER"/>
-            <result property="publicGists" column="public_gists" jdbcType="INTEGER"/>
+            <result property="publicRepos" column="publicRepos" jdbcType="INTEGER"/>
+            <result property="publicGists" column="publicGists" jdbcType="INTEGER"/>
             <result property="accountfollowers" column="accountFollowers" jdbcType="INTEGER"/>
             <result property="accountfollowing" column="accountFollowing" jdbcType="INTEGER"/>
             <result property="createtime" column="createTime" jdbcType="TIMESTAMP"/>
@@ -28,8 +28,8 @@
         id,login,nodeId,
         avatarUrl,accountType,accountName,
         company,blog,location,
-        email,hireable,public_repos,
-        public_gists,accountFollowers,accountFollowing,
+        email,hireable,publicRepos,
+        publicGists,accountFollowers,accountFollowing,
         createTime,updateTime
     </sql>
 </mapper>
