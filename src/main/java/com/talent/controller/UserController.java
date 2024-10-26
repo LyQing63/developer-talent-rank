@@ -1,5 +1,7 @@
 package com.talent.controller;
 
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.talent.common.BaseResponse;
@@ -7,13 +9,13 @@ import com.talent.common.ErrorCode;
 import com.talent.common.ResultUtils;
 import com.talent.manager.RedisManager;
 import com.talent.model.dto.User;
+import com.talent.model.vo.UserLoginVO;
 import com.talent.service.UserService;
+import com.talent.utils.GitHubDeveloperRankUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,9 +36,36 @@ public class UserController {
     @Resource
     private RedisManager redisManager;
 
+    @Value("github.client-id")
+    private String clientId;
+
+    @Value("github.client-secret")
+    private String clientSecret;
+
+    private final String GITHUB_TOKEN = "https://github.com/login/oauth/access_token";
+
     @GetMapping("/oauth")
-    public BaseResponse<User> login(@AuthenticationPrincipal OAuth2User user) {
-        User user1 = User.parseUser(user);
+    public BaseResponse<UserLoginVO> login(String code) {
+
+        JSONObject request = new JSONObject();
+        request.putOnce("client-id", clientId);
+        request.putOnce("client_secret", clientSecret);
+        request.putOnce("code", code);
+
+        HttpResponse response = HttpRequest.post(GITHUB_TOKEN)
+                .body(request.toString())
+                .header("Accept", "application/json")
+                .execute();
+
+        JSONObject body = new JSONObject(response.body());
+
+        String token = body.getStr("access_token");
+
+        UserLoginVO userLoginVO = new UserLoginVO();
+        userLoginVO.setToken(token);
+
+        String userBody = GitHubDeveloperRankUtils.makeRequest("users", token);
+        User user1 = User.parseUser(new JSONObject(userBody));
         Long id = user1.getId();
 
         // mysql中查询
@@ -49,25 +78,25 @@ public class UserController {
             }
         }
 
-        return ResultUtils.success(user1);
+        return ResultUtils.success(userLoginVO);
     }
 
     @GetMapping("/currentUser")
-    public BaseResponse<User> currentUser() {
+    public BaseResponse<User> currentUser(@RequestHeader(value = "Authorization") String authorization) {
+        String[] s = authorization.split(" ");
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            return ResultUtils.error(ErrorCode.PARAMS_ERROR, "无登录态，请登录");
+        if (s.length < 2) {
+            return ResultUtils.error(ErrorCode.PARAMS_ERROR, "未登录");
         }
 
-        JSONObject entries = new JSONObject(authentication.getAuthorities().toArray()[0]);
-        JSONObject user = (JSONObject) entries.get("attributes");
+        String body = GitHubDeveloperRankUtils.makeRequest("user", s[1]);
+        JSONObject user = new JSONObject(body);
 
         return ResultUtils.success(user.toBean(User.class));
     }
 
-    @GetMapping("/get_developer")
-    public BaseResponse<User> get_developer(String login) {
+    @GetMapping("/getDeveloper")
+    public BaseResponse<User> getDeveloper(String login, String token) {
 
         // 从Redis中获取
         Object userCache = redisManager.getUserInfo(login);
@@ -78,7 +107,7 @@ public class UserController {
             User userSaved = userService.getOne(queryWrapper);
             if (userSaved == null) {
                 // 数据库中也没有数据
-                User userFromGithub = userService.getUserFromGithub(login);
+                User userFromGithub = userService.getUserFromGithub(login, token);
                 // 不存在这个用户
                 if (userFromGithub == null) {
                     return ResultUtils.error(ErrorCode.PARAMS_ERROR, "用户不存在");

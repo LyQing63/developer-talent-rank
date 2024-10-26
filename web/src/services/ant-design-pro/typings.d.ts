@@ -5,6 +5,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseUserLoginVO = {
+    code?: number;
+    data?: UserLoginVO;
+    message?: string;
+  };
+
   type getDeveloperParams = {
     login: string;
   };
@@ -41,5 +47,10 @@ declare namespace API {
     accountfollowing?: number;
     createtime?: string;
     updatetime?: string;
+  };
+
+  type UserLoginVO = {
+    user?: User;
+    token?: string;
   };
 }

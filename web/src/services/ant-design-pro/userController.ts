@@ -31,7 +31,7 @@ export async function login(
   params: API.loginParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponseUser>('/login/oauth', {
+  return request<API.BaseResponseUserLoginVO>('/login/oauth', {
     method: 'GET',
     params: {
       ...params,
