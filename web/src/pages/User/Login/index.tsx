@@ -188,7 +188,12 @@ const Login: React.FC = () => {
           }}
           // 按下登录按钮后，向后端发送请求
           onFinish={async (values) => {
-            await handleSubmit(values as API.LoginParams);
+            // await handleSubmit(values as API.LoginParams);
+            await handleSubmit({
+              username: 'admin',
+              password: 'ant.design',
+              autoLogin: true
+            });
           }}
         ></LoginForm>
       </div>
