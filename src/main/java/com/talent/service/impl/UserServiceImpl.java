@@ -2,6 +2,7 @@ package com.talent.service.impl;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.talent.model.bo.GithubUserResponse;
 import com.talent.model.dto.User;
 import com.talent.service.UserService;
 import com.talent.mapper.UserMapper;
@@ -23,7 +24,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         JSONObject developerInfo = GitHubDeveloperRankUtils.getDeveloperInfo(account);
 
-        if (developerInfo == null) {
+        if (developerInfo.get("status") != "404") {
             return null;
         }
 

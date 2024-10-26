@@ -1,5 +1,6 @@
 package com.talent.controller;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.talent.common.BaseResponse;
 import com.talent.common.ErrorCode;
@@ -8,7 +9,9 @@ import com.talent.manager.RedisManager;
 import com.talent.model.dto.User;
 import com.talent.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,9 +35,10 @@ public class UserController {
     private RedisManager redisManager;
 
     @GetMapping("/oauth")
-    public BaseResponse login(@AuthenticationPrincipal OAuth2User user) {
+    public BaseResponse<User> login(@AuthenticationPrincipal OAuth2User user) {
         User user1 = User.parseUser(user);
         Long id = user1.getId();
+
         // mysql中查询
         User userSaved = userService.getById(id);
         if (userSaved == null) {
@@ -48,8 +52,22 @@ public class UserController {
         return ResultUtils.success(user1);
     }
 
+    @GetMapping("/currentUser")
+    public BaseResponse<User> currentUser() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResultUtils.error(ErrorCode.PARAMS_ERROR, "无登录态，请登录");
+        }
+
+        JSONObject entries = new JSONObject(authentication.getAuthorities().toArray()[0]);
+        JSONObject user = (JSONObject) entries.get("attributes");
+
+        return ResultUtils.success(user.toBean(User.class));
+    }
+
     @GetMapping("/get_developer")
-    public BaseResponse get_developer(String login) {
+    public BaseResponse<User> get_developer(String login) {
 
         // 从Redis中获取
         Object userCache = redisManager.getUserInfo(login);
@@ -72,7 +90,7 @@ public class UserController {
                     return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "数据库存储失败");
                 }
                 // 再缓存到redis中
-                redisManager.cacheUserInfo(login, userFromGithub, 30, TimeUnit.MINUTES);
+                redisManager.cacheDeveloperInfo(login, userFromGithub, 30, TimeUnit.MINUTES);
 
                 return ResultUtils.success(userFromGithub);
 
@@ -80,7 +98,7 @@ public class UserController {
             return ResultUtils.success(userSaved);
         }
 
-        return ResultUtils.success(userCache);
+        return ResultUtils.success((User) userCache);
     }
 
 }
