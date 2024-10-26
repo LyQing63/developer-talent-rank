@@ -17,6 +17,8 @@ declare namespace API {
     user: OAuth2User;
   };
 
+  type CurrentUser = {};
+
   type OAuth2User = {
     authorities?: GrantedAuthority[];
     attributes?: Record<string, any>;
