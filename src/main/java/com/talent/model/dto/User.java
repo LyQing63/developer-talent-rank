@@ -5,14 +5,12 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.Map;
-
-import lombok.Data;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 /**
  * 用户
@@ -193,32 +191,6 @@ public class User implements Serializable {
         return sb.toString();
     }
 
-    public static User parseUser(OAuth2User user) {
-
-        // 定义日期时间格式
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
-        User userDto = new User();
-        Map<String, Object> userAttributes = user.getAttributes();
-        userDto.setId(Long.valueOf((Integer) userAttributes.get("id")));
-        userDto.setLogin((String) userAttributes.get("login"));
-        userDto.setNodeid((String) userAttributes.get("node_id"));
-        userDto.setAvatarurl((String) userAttributes.get("avatar_url"));
-        userDto.setAccounttype((String) userAttributes.get("type"));
-        userDto.setAccountname((String) userAttributes.get("name"));
-        userDto.setCompany((String) userAttributes.get("company"));
-        userDto.setBlog((String) userAttributes.get("blog"));
-        userDto.setLocation((String) userAttributes.get("location"));
-        userDto.setEmail((String) userAttributes.get("email"));
-        userDto.setHireable((Integer) userAttributes.get("hireable"));
-        userDto.setPublicRepos((Integer) userAttributes.get("public_repos"));
-        userDto.setPublicGists((Integer) userAttributes.get("public_gists"));
-        userDto.setAccountfollowers((Integer) userAttributes.get("followers"));
-        userDto.setAccountfollowing((Integer) userAttributes.get("following"));
-        userDto.setCreatetime(LocalDateTime.parse((String) userAttributes.get("created_at"), formatter));
-        userDto.setUpdatetime(LocalDateTime.parse((String) userAttributes.get("updated_at"), formatter));
-        return userDto;
-    }
 
     public static User parseUser(JSONObject user) {
 

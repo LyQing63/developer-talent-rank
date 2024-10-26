@@ -10,13 +10,13 @@ export async function currentUser(options?: { [key: string]: any }) {
   });
 }
 
-/** 此处后端没有提供注释 GET /login/get_developer */
+/** 此处后端没有提供注释 GET /login/getDeveloper */
 export async function getDeveloper(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getDeveloperParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponseUser>('/login/get_developer', {
+  return request<API.BaseResponseUser>('/login/getDeveloper', {
     method: 'GET',
     params: {
       ...params,
@@ -35,8 +35,6 @@ export async function login(
     method: 'GET',
     params: {
       ...params,
-      user: undefined,
-      ...params['user'],
     },
     ...(options || {}),
   });

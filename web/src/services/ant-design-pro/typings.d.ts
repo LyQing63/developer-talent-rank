@@ -13,20 +13,11 @@ declare namespace API {
 
   type getDeveloperParams = {
     login: string;
-  };
-
-  type GrantedAuthority = {
-    authority?: string;
+    token: string;
   };
 
   type loginParams = {
-    user: OAuth2User;
-  };
-
-  type OAuth2User = {
-    attributes?: Record<string, any>;
-    authorities?: GrantedAuthority[];
-    name?: string;
+    code: string;
   };
 
   type User = {
