@@ -43,22 +43,6 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
-  security:
-    oauth2:
-      client:
-        registration:
-          github:
-            client-id: Ov23liy6syfyoDsLh7M3
-            client-secret: d810918718545b58fa44931cabcca89aa9d4878f
-            scope: read:user
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            client-name: GitHub
-            authorization-grant-type: authorization_code
-            provider:
-              github:
-                authorization-uri: https://github.com/login/oauth/authorize
-                token-uri: https://github.com/login/oauth/access_token
-                user-info-uri: https://api.github.com/user
 server:
   address: 0.0.0.0
   port: 8101
@@ -114,3 +98,6 @@ springdoc:
 # knife4j的增强配置，不需要增强可以不配
 knife4j:
   enable: true
+github:
+  client-id: ################
+  client-secret: ################
