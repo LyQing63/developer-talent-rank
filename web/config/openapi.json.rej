@@ -1,0 +1,10 @@
+diff a/web/config/openapi.json b/web/config/openapi.json	(rejected hunks)
+@@ -33,7 +33,7 @@
+             "content": {
+               "*/*": {
+                 "schema": {
+-                  "$ref": "#/components/schemas/BaseResponse"
++                  "$ref": "#/components/schemas/BaseResponseUser"
+                 }
+               }
+             }

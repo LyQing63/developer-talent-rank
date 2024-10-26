@@ -24,6 +24,7 @@ export default [
   },
   {
     path: '/welcome',
+    layout: false,
     name: 'welcome',
     icon: 'smile',
     component: './Welcome',
@@ -32,10 +33,11 @@ export default [
     path: '/admin',
     name: 'admin',
     icon: 'crown',
-    access: 'canAdmin',
+    // access: 'canAdmin',
     routes: [
       {
         path: '/admin',
+        layout: false,
         redirect: '/admin/sub-page',
       },
       {
@@ -46,14 +48,16 @@ export default [
     ],
   },
   {
-    name: 'list.table-list',
-    icon: 'table',
-    path: '/list',
-    component: './TableList',
+    name: 'Search',
+    layout: false,
+    icon: 'search',
+    path: '/Search',
+    component: "./Search",
   },
+
   {
     path: '/',
-    redirect: '/welcome',
+    redirect: '/Search',
   },
   {
     path: '*',

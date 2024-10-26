@@ -132,7 +132,7 @@ exports[`Login Page should login success 1`] = `
                       <span
                         class="ant-pro-base-menu-inline-item-text ant-pro-base-menu-inline-item-text-has-icon"
                       >
-                        Search Table
+                        Index Table
                       </span>
                     </div>
                   </a>
