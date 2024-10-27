@@ -17,18 +17,19 @@ const loginPath = '/user/login';
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
   currentUser?: API.User;
+  token?: string | undefined;
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.User | undefined>;
 }> {
   const fetchUserInfo = async () => {
-    // try {
-    //   const msg = await currentUser({
-    //     skipErrorHandler: true,
-    //   });
-    //   return msg.data;
-    // } catch (error) {
-    //   history.push(loginPath);
-    // }
+    try {
+      const msg = await currentUser({
+        skipErrorHandler: true,
+      });
+      return msg.data;
+    } catch (error) {
+      history.push(loginPath);
+    }
     return undefined;
   };
   // 如果不是登录页面，执行
@@ -125,7 +126,6 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     ...initialState?.settings,
   };
 };
-
 /**
  * @name request 配置，可以配置错误处理
  * 它基于 axios 和 ahooks 的 useRequest 提供了一套统一的网络请求和错误处理方案。

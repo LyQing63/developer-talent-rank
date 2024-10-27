@@ -9,10 +9,13 @@ import { LoginForm } from '@ant-design/pro-components';
 import { Helmet, history, SelectLang, useIntl, useModel } from '@umijs/max';
 import { Alert, message } from 'antd';
 import Settings from '../../../../config/defaultSettings';
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { flushSync } from 'react-dom';
 import { createStyles } from 'antd-style';
-import {login} from "@/services/ant-design-pro/userController";
+import { login } from '@/services/ant-design-pro/userController';
+
+
+
 
 const useStyles = createStyles(({ token }) => {
   return {
@@ -99,6 +102,7 @@ const Login: React.FC = () => {
   const { styles } = useStyles();
   const intl = useIntl();
 
+
   const fetchUserInfo = async () => {
     const userInfo = await initialState?.fetchUserInfo?.();
     if (userInfo) {
@@ -111,32 +115,58 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (values: API.LoginParams) => {
-    try {
-      // 登录
-      const msg = await login(values);
-      if (msg.code === 200) {
-        const defaultLoginSuccessMessage = intl.formatMessage({
-          id: 'pages.login.success',
-          defaultMessage: '登录成功！',
-        });
-        message.success(defaultLoginSuccessMessage);
-        await fetchUserInfo();
-        const urlParams = new URL(window.location.href).searchParams;
-        history.push(urlParams.get('redirect') || '/');
-        return;
-      }
-      console.log(msg);
-      // 如果失败去设置用户错误信息
-      setUserLoginState(msg);
-    } catch (error) {
-      const defaultLoginFailureMessage = intl.formatMessage({
-        id: 'pages.login.failure',
-        defaultMessage: '登录失败，请重试！',
-      });
-      console.log(error);
-      message.error(defaultLoginFailureMessage);
+  useEffect(() => {
+    const getCodeFromURL = (path: string): string | null => {
+      // 如果找到了下一个参数，截取到那个位置；否则截取到字符串的末尾
+      return path.slice(6);
+    };
+
+    const path = history.location.search
+    const code = getCodeFromURL(path)
+    if (code !== null) {
+      login({code}).then((res) => {
+        if(res.code===200)
+        {
+          setInitialState({
+            ...initialState,
+            token: res.data.token,
+            currentUser: res.data.user,
+          });
+          fetchUserInfo();
+          const urlParams = new URL(window.location.href).searchParams;
+          history.push(urlParams.get('redirect') || '/');
+        }
+      })
     }
+  })
+
+  const handleSubmit = async (values: API.LoginParams) => {
+    // try {
+      history.push("https://github.com/login/oauth/authorize?client_id=Ov23liy6syfyoDsLh7M3&login&state")
+      // 登录
+    //   const msg = await login(values);
+    //   if (msg.code === 200) {
+    //     const defaultLoginSuccessMessage = intl.formatMessage({
+    //       id: 'pages.login.success',
+    //       defaultMessage: '登录成功！',
+    //     });
+    //     message.success(defaultLoginSuccessMessage);
+    //     await fetchUserInfo();
+    //     const urlParams = new URL(window.location.href).searchParams;
+    //     history.push(urlParams.get('redirect') || '/');
+    //     return;
+    //   }
+    //   console.log(msg);
+    //   // 如果失败去设置用户错误信息
+    //   setUserLoginState(msg);
+    // } catch (error) {
+    //   const defaultLoginFailureMessage = intl.formatMessage({
+    //     id: 'pages.login.failure',
+    //     defaultMessage: '登录失败，请重试！',
+    //   });
+    //   console.log(error);
+    //   message.error(defaultLoginFailureMessage);
+    // }
   };
   const { status, type: loginType } = userLoginState;
 
