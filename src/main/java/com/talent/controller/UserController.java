@@ -13,6 +13,7 @@ import com.talent.model.vo.UserLoginVO;
 import com.talent.service.UserService;
 import com.talent.utils.GitHubDeveloperRankUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -46,6 +47,10 @@ public class UserController {
 
     @GetMapping("/oauth")
     public BaseResponse<UserLoginVO> login(String code) {
+
+        if (StringUtils.isAnyBlank(code)) {
+            return ResultUtils.error(ErrorCode.PARAMS_ERROR, "缺少登录code");
+        }
 
         JSONObject request = new JSONObject();
         request.putOnce("client-id", clientId);
