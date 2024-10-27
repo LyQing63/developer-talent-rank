@@ -2,6 +2,7 @@ package com.talent.controller;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.talent.common.BaseResponse;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.net.ssl.SSLSocketFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,10 +38,10 @@ public class UserController {
     @Resource
     private RedisManager redisManager;
 
-    @Value("github.client-id")
+    @Value("${github.client-id}")
     private String clientId;
 
-    @Value("github.client-secret")
+    @Value("${github.client-secret}")
     private String clientSecret;
 
     private final String GITHUB_TOKEN = "https://github.com/login/oauth/access_token";
@@ -47,25 +49,33 @@ public class UserController {
     @GetMapping("/oauth")
     public BaseResponse<UserLoginVO> login(String code) {
 
-        JSONObject request = new JSONObject();
-        request.putOnce("client-id", clientId);
-        request.putOnce("client_secret", clientSecret);
-        request.putOnce("code", code);
+        if (code == null) {
+            return ResultUtils.error(ErrorCode.PARAMS_ERROR, "code不能为空");
+        }
 
         HttpResponse response = HttpRequest.post(GITHUB_TOKEN)
-                .body(request.toString())
+                .setSSLProtocol("TLSv1.2")
+                .form("client_id", clientId)
+                .form("client_secret", clientSecret)
+                .form("code", code)
                 .header("Accept", "application/json")
                 .execute();
 
         JSONObject body = new JSONObject(response.body());
+
+        if (body == null) {
+            log.info("body ----->" + body);
+            return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "获取 GitHub Token 失败");
+        }
 
         String token = body.getStr("access_token");
 
         UserLoginVO userLoginVO = new UserLoginVO();
         userLoginVO.setToken(token);
 
-        String userBody = GitHubDeveloperRankUtils.makeRequest("users", token);
+        String userBody = GitHubDeveloperRankUtils.makeRequest("user", token);
         User user1 = User.parseUser(new JSONObject(userBody));
+        userLoginVO.setUser(user1);
         Long id = user1.getId();
 
         // mysql中查询

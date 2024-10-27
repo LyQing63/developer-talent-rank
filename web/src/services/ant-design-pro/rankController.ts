@@ -8,7 +8,7 @@ export async function getScore(
   params: API.getScoreParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponse>('/rank/score', {
+  return request<API.BaseResponse>('/api/rank/score', {
     method: 'GET',
     params: {
       ...params,

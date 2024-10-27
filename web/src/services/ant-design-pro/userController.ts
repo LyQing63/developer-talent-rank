@@ -4,11 +4,14 @@ import { request } from '@umijs/max';
 
 /** 此处后端没有提供注释 GET /login/currentUser */
 export async function currentUser(options?: { [key: string]: any }) {
-  return request<API.BaseResponseUser>('/login/currentUser', {
+  return request<API.BaseResponseUser>('/api/login/currentUser', {
     method: 'GET',
     ...(options || {}),
   });
 }
+
+export function outLogin() {}
+
 
 /** 此处后端没有提供注释 GET /login/getDeveloper */
 export async function getDeveloper(
@@ -16,7 +19,7 @@ export async function getDeveloper(
   params: API.getDeveloperParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponseUser>('/login/getDeveloper', {
+  return request<API.BaseResponseUser>('/api/login/getDeveloper', {
     method: 'GET',
     params: {
       ...params,
@@ -31,7 +34,7 @@ export async function login(
   params: API.loginParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponseUserLoginVO>('/login/oauth', {
+  return request<API.BaseResponseUserLoginVO>('/api/login/oauth', {
     method: 'GET',
     params: {
       ...params,

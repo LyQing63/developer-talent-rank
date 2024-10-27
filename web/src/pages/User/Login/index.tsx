@@ -123,7 +123,7 @@ const Login: React.FC = () => {
 
     const path = history.location.search
     const code = getCodeFromURL(path)
-    if (code !== null) {
+    if (code !== null && code !== '') {
       login({code}).then((res) => {
         if(res.code===200)
         {
