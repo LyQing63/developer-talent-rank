@@ -22,6 +22,7 @@
             <result property="accountfollowing" column="accountFollowing" jdbcType="INTEGER"/>
             <result property="createtime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updatetime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="bio" column="bio" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -30,6 +31,6 @@
         company,blog,location,
         email,hireable,publicRepos,
         publicGists,accountFollowers,accountFollowing,
-        createTime,updateTime
+        createTime,updateTime,bio
     </sql>
 </mapper>
