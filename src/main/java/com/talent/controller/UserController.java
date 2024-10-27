@@ -96,7 +96,7 @@ public class UserController {
     }
 
     @GetMapping("/getDeveloper")
-    public BaseResponse<User> getDeveloper(String login, String token) {
+    public BaseResponse<User> getDeveloper(String login, @RequestHeader(value = "Authorization") String token) {
 
         // 从Redis中获取
         Object userCache = redisManager.getUserInfo(login);

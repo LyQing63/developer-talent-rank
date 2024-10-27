@@ -6,8 +6,9 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import com.talent.model.bo.DeveloperSearchResult;
+import com.talent.model.bo.*;
 import com.talent.model.dto.User;
+import com.talent.model.vo.RatingVO;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -40,6 +41,75 @@ public class GitHubDeveloperRankUtils {
 
     public static JSONObject getDeveloperInfo (String account, String token) {
         return new JSONObject(makeRequest("users/" + account, token));
+    }
+
+    public static JSONArray getStarredInfo (String account, String token) {
+        return new JSONArray(makeRequest("users/" + account + "/starred?&per_page=250", token));
+    }
+
+    public static JSONArray getReposInfo (String account, String token) {
+        return new JSONArray(makeRequest("users/" + account + "/repos?&per_page=250", token));
+    }
+
+    public static List<RatingVO> getRatingResult(User user, String token) {
+        UserRating userRating = new UserRating(user, getReposInfo(user.getLogin(), token));
+        userRating.ratePopularity();
+        userRating.rateBacklinks();
+        userRating.rateRepoDescription();
+        userRating.rateWebpage();
+        userRating.rateRepoPopularity();
+        userRating.rateBio();
+
+        List<String> repoDescLength = userRating.getRepos().stream()
+                .filter(r -> r.getDescription() == null || r.getDescription().split(" ").length < 5)
+                .map(RepoBo::getFullName)
+                .collect(Collectors.toList());
+
+        List<String> notExist = Arrays.asList(
+                new BackLink("Biography", userRating.getRating().getBioExists()),
+                new BackLink("Blog", userRating.getRating().getBlogExists()),
+                new BackLink("Location", userRating.getRating().getLocExists()),
+                new BackLink("Company Name", userRating.getRating().getCompanyExists())
+        ).stream().filter(BackLink::getIsExists).map(BackLink::getType).collect(Collectors.toList());
+
+        List<String> licensing = userRating.getRepos().stream()
+                .filter(r -> r.getLicense() == null)
+                .map(RepoBo::getFullName)
+                .collect(Collectors.toList());
+
+        List<String> archive = userRating.getRepos().stream()
+                .filter(r -> {
+                    long today = System.currentTimeMillis();
+                    long updatedAt = r.getUpdatedAt().getTime();
+                    long daysDiff = (today - updatedAt) / (1000 * 60 * 60 * 24);
+                    return daysDiff > 240;
+                })
+                .map(RepoBo::getFullName)
+                .collect(Collectors.toList());
+
+        Suggestions suggestions = new Suggestions(repoDescLength, notExist, licensing, archive);
+
+        return ResultFinalizer.finalizeResult(userRating.getRating(), suggestions);
+    }
+
+    public static Integer getRankingScore(List<RatingVO> ratingVOS) {
+        // Sum of all scores
+//        int scoreSum = ratingVOS.stream()
+//                .filter(r -> !r.getPartial()) // Assuming getPartial() returns the value of 'Partial'
+//                .mapToInt(RatingVO::getScore) // Using method reference to get the score
+//                .sum();
+        int scoreSum = 0;
+        for (int i = 0; i < ratingVOS.size(); i++) {
+            if (!ratingVOS.get(i).getPartial()) {
+                scoreSum += ratingVOS.get(i).getScore();
+            }
+        }
+
+        // Increase overall score by 1.08 to improve accuracy
+        int calcScore = (int) ((scoreSum / 6.0) * 1.08); // Using 6.0 to ensure double division
+
+        return calcScore > 100 ? 100 : calcScore; // Return 100 if calcScore is greater than 100
+
     }
 
     public static double calculateProjectImportance(JSONObject repoData) {
