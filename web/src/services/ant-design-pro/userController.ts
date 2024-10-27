@@ -1,8 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
 import { request } from '@umijs/max';
-// src/constants/index.ts
-export const loginPath = '/user/login';
 
 /** 此处后端没有提供注释 GET /login/currentUser */
 export async function currentUser(options?: { [key: string]: any }) {
@@ -40,22 +38,4 @@ export async function login(
     },
     ...(options || {}),
   });
-}
-
-export async function outLogin() {
-  try {
-    // 调用后端的登出接口
-    await request('/api/logout', {
-      method: 'POST',
-    });
-
-    // 清除本地存储的用户信息
-    localStorage.removeItem('currentUser');
-    sessionStorage.removeItem('token');
-
-    // 重定向到登录页面
-    history.replaceState(null, '/');
-  } catch (error) {
-    console.error('登出失败', error);
-  }
 }

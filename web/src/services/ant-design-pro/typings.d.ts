@@ -1,4 +1,10 @@
 declare namespace API {
+  type BaseResponse = {
+    code?: number;
+    data?: Record<string, any>;
+    message?: string;
+  };
+
   type BaseResponseUser = {
     code?: number;
     data?: User;
@@ -13,7 +19,10 @@ declare namespace API {
 
   type getDeveloperParams = {
     login: string;
-    token: string;
+  };
+
+  type getScoreParams = {
+    account: string;
   };
 
   type loginParams = {
@@ -29,6 +38,7 @@ declare namespace API {
     accountname?: string;
     company?: string;
     blog?: string;
+    bio?: string;
     location?: string;
     email?: string;
     hireable?: number;
