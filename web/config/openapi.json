@@ -11,19 +11,27 @@
     }
   ],
   "paths": {
-    "/login/oauth": {
+    "/rank/score": {
       "get": {
         "tags": [
-          "user-controller"
+          "rank-controller"
         ],
-        "operationId": "login",
+        "operationId": "getScore",
         "parameters": [
           {
-            "name": "user",
+            "name": "account",
             "in": "query",
             "required": true,
             "schema": {
-              "$ref": "#/components/schemas/OAuth2User"
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -33,7 +41,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUser"
+                  "$ref": "#/components/schemas/BaseResponse"
                 }
               }
             }
@@ -41,16 +49,54 @@
         }
       }
     },
-    "/login/get_developer": {
+    "/login/oauth": {
       "get": {
         "tags": [
           "user-controller"
         ],
-        "operationId": "get_developer",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserLoginVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login/getDeveloper": {
+      "get": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "getDeveloper",
         "parameters": [
           {
             "name": "login",
             "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
             "required": true,
             "schema": {
               "type": "string"
@@ -77,6 +123,16 @@
           "user-controller"
         ],
         "operationId": "currentUser",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -94,35 +150,7 @@
   },
   "components": {
     "schemas": {
-      "GrantedAuthority": {
-        "type": "object",
-        "properties": {
-          "authority": {
-            "type": "string"
-          }
-        }
-      },
-      "OAuth2User": {
-        "type": "object",
-        "properties": {
-          "attributes": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "authorities": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GrantedAuthority"
-            }
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseUser": {
+      "BaseResponse": {
         "type": "object",
         "properties": {
           "code": {
@@ -130,7 +158,22 @@
             "format": "int32"
           },
           "data": {
-            "$ref": "#/components/schemas/User"
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponseUserLoginVO": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "data": {
+            "$ref": "#/components/schemas/UserLoginVO"
           },
           "message": {
             "type": "string"
@@ -163,6 +206,9 @@
             "type": "string"
           },
           "blog": {
+            "type": "string"
+          },
+          "bio": {
             "type": "string"
           },
           "location": {
@@ -198,6 +244,32 @@
           "updatetime": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "UserLoginVO": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponseUser": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "data": {
+            "$ref": "#/components/schemas/User"
+          },
+          "message": {
+            "type": "string"
           }
         }
       }

@@ -6,22 +6,26 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import com.talent.model.bo.*;
+import com.talent.model.dto.User;
+import com.talent.model.vo.RatingVO;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
+@Slf4j
 public class GitHubDeveloperRankUtils {
 
-
-    private static Map<String, JSONObject> developerCache = new HashMap<>();
-    private static Map<String, JSONObject> projectCache = new HashMap<>();
     private static Map<String, Map<String, Integer>> contributionCache = new HashMap<>();
     private static String baseUrl = "https://api.github.com";
 
-    private static JSONObject makeRequest(String endpoint, String githubToken) {
+    public static String makeRequest(String endpoint, String token) {
         String url = StrUtil.format("{}/{}", baseUrl, endpoint);
+
         HttpResponse response = HttpRequest.get(url)
-                .header("Authorization", "token " + githubToken)
                 .header("Accept", "application/vnd.github.v3+json")
+                .header("Authorization", "Bearer " + token)
                 .execute();
 
         if (response.getStatus() == HttpStatus.HTTP_NOT_FOUND) {
@@ -32,15 +36,80 @@ public class GitHubDeveloperRankUtils {
             return null;
         }
 
-        return new JSONObject(response.body());
+        return response.body();
     }
 
-    public static JSONObject getDeveloperInfo (String account) {
-        String url = StrUtil.format("{}/{}", baseUrl, "users/");
-        HttpResponse response = HttpRequest.get(url+account)
-                .header("Accept", "application/vnd.github.v3+json")
-                .execute();
-        return new JSONObject(response.body());
+    public static JSONObject getDeveloperInfo (String account, String token) {
+        return new JSONObject(makeRequest("users/" + account, token));
+    }
+
+    public static JSONArray getStarredInfo (String account, String token) {
+        return new JSONArray(makeRequest("users/" + account + "/starred?&per_page=250", token));
+    }
+
+    public static JSONArray getReposInfo (String account, String token) {
+        return new JSONArray(makeRequest("users/" + account + "/repos?&per_page=250", token));
+    }
+
+    public static List<RatingVO> getRatingResult(User user, String token) {
+        UserRating userRating = new UserRating(user, getReposInfo(user.getLogin(), token));
+        userRating.ratePopularity();
+        userRating.rateBacklinks();
+        userRating.rateRepoDescription();
+        userRating.rateWebpage();
+        userRating.rateRepoPopularity();
+        userRating.rateBio();
+
+        List<String> repoDescLength = userRating.getRepos().stream()
+                .filter(r -> r.getDescription() == null || r.getDescription().split(" ").length < 5)
+                .map(RepoBo::getFullName)
+                .collect(Collectors.toList());
+
+        List<String> notExist = Arrays.asList(
+                new BackLink("Biography", userRating.getRating().getBioExists()),
+                new BackLink("Blog", userRating.getRating().getBlogExists()),
+                new BackLink("Location", userRating.getRating().getLocExists()),
+                new BackLink("Company Name", userRating.getRating().getCompanyExists())
+        ).stream().filter(BackLink::getIsExists).map(BackLink::getType).collect(Collectors.toList());
+
+        List<String> licensing = userRating.getRepos().stream()
+                .filter(r -> r.getLicense() == null)
+                .map(RepoBo::getFullName)
+                .collect(Collectors.toList());
+
+        List<String> archive = userRating.getRepos().stream()
+                .filter(r -> {
+                    long today = System.currentTimeMillis();
+                    long updatedAt = r.getUpdatedAt().getTime();
+                    long daysDiff = (today - updatedAt) / (1000 * 60 * 60 * 24);
+                    return daysDiff > 240;
+                })
+                .map(RepoBo::getFullName)
+                .collect(Collectors.toList());
+
+        Suggestions suggestions = new Suggestions(repoDescLength, notExist, licensing, archive);
+
+        return ResultFinalizer.finalizeResult(userRating.getRating(), suggestions);
+    }
+
+    public static Integer getRankingScore(List<RatingVO> ratingVOS) {
+        // Sum of all scores
+//        int scoreSum = ratingVOS.stream()
+//                .filter(r -> !r.getPartial()) // Assuming getPartial() returns the value of 'Partial'
+//                .mapToInt(RatingVO::getScore) // Using method reference to get the score
+//                .sum();
+        int scoreSum = 0;
+        for (int i = 0; i < ratingVOS.size(); i++) {
+            if (!ratingVOS.get(i).getPartial()) {
+                scoreSum += ratingVOS.get(i).getScore();
+            }
+        }
+
+        // Increase overall score by 1.08 to improve accuracy
+        int calcScore = (int) ((scoreSum / 6.0) * 1.08); // Using 6.0 to ensure double division
+
+        return calcScore > 100 ? 100 : calcScore; // Return 100 if calcScore is greater than 100
+
     }
 
     public static double calculateProjectImportance(JSONObject repoData) {
@@ -65,12 +134,16 @@ public class GitHubDeveloperRankUtils {
         contributions.put("pull_requests", 0);
         contributions.put("reviews", 0);
 
+        String url = "repos/" + repoFullName + "/commits?author=" + username;
         // 获取提交数据
-        JSONArray commits = makeRequest("repos/" + repoFullName + "/commits?author=" + username, token).getJSONArray("commits");
+        JSONArray commits = new JSONArray(makeRequest(url, token));
+//                            .getJSONArray("commits");
         contributions.put("commits", commits.size());
 
         // 获取议题和PR数据
-        JSONArray issues = makeRequest("repos/" + repoFullName + "/issues?creator=" + username + "&state=all", token).getJSONArray("issues");
+        JSONArray issues = new JSONArray(makeRequest(url + "&state=all", token));
+//                            .getJSONArray("issues");
+
         for (JSONObject issue : issues.jsonIter()) {
             if (issue.containsKey("pull_request")) {
                 contributions.put("pull_requests", contributions.get("pull_requests") + 1);
@@ -84,7 +157,10 @@ public class GitHubDeveloperRankUtils {
     }
 
     public static double calculateTalentRank(String username, String token) {
-        JSONArray repos = makeRequest("users/" + username + "/repos", token).getJSONArray("repos");
+
+        String url = "users/" + username + "/repos";
+
+        JSONArray repos = new JSONArray(makeRequest(url, token));
         double totalScore = 0;
 
         for (JSONObject repo : repos.jsonIter()) {
@@ -107,8 +183,8 @@ public class GitHubDeveloperRankUtils {
         return totalScore;
     }
 
-    public static String predictNation(String username, String token) {
-        JSONObject userData = makeRequest("users/" + username, token);
+    public static String predictNation(JSONObject userData) {
+        String username = userData.get("login").toString();
 
         // 如果用户提供了位置信息
         if (userData.containsKey("location")) {
@@ -116,33 +192,40 @@ public class GitHubDeveloperRankUtils {
         }
 
         // 构建用户关系网络进行预测
-        JSONArray following = makeRequest("users/" + username + "/following", token).getJSONArray("following");
-        JSONArray followers = makeRequest("users/" + username + "/followers", token).getJSONArray("followers");
+//        JSONArray following = new JSONArray(makeRequest("users/" + username + "/following"));
+//        JSONArray followers = new JSONArray(makeRequest("users/" + username + "/followers"));
+//
+//        Map<String, Integer> nations = new HashMap<>();
+//        for (JSONObject user : following.jsonIter()) {
+//            JSONObject userDetail = new JSONObject(makeRequest("users/" + user.getStr("login")));
+//            if (userDetail.containsKey("location")) {
+//                String nation = parseLocation(userDetail.getStr("location"));
+//                nations.put(nation, nations.getOrDefault(nation, 0) + 1);
+//            }
+//        }
+//
+//        for (JSONObject user : followers.jsonIter()) {
+//            JSONObject userDetail = new JSONObject(makeRequest("users/" + user.getStr("login")));
+//            if (userDetail.containsKey("location")) {
+//                String nation = parseLocation(userDetail.getStr("location"));
+//                nations.put(nation, nations.getOrDefault(nation, 0) + 1);
+//            }
+//        }
 
-        Map<String, Integer> nations = new HashMap<>();
-        for (JSONObject user : following.jsonIter()) {
-            JSONObject userDetail = makeRequest("users/" + user.getStr("login"), token);
-            if (userDetail.containsKey("location")) {
-                String nation = parseLocation(userDetail.getStr("location"));
-                nations.put(nation, nations.getOrDefault(nation, 0) + 1);
-            }
-        }
+//        return nations.entrySet().stream()
+//                .max(Map.Entry.comparingByValue())
+//                .map(Map.Entry::getKey)
+//                .orElse("Unknown");
 
-        for (JSONObject user : followers.jsonIter()) {
-            JSONObject userDetail = makeRequest("users/" + user.getStr("login"), token);
-            if (userDetail.containsKey("location")) {
-                String nation = parseLocation(userDetail.getStr("location"));
-                nations.put(nation, nations.getOrDefault(nation, 0) + 1);
-            }
-        }
-
-        return nations.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse("Unknown");
+        return "Unknown";
     }
 
     private static String parseLocation(String location) {
+
+        if (location == null) {
+            return "Unknown";
+        }
+
         location = location.toLowerCase();
         Map<String, List<String>> countryKeywords = new HashMap<>();
         countryKeywords.put("china", Arrays.asList("china", "cn", "beijing", "shanghai", "guangzhou", "shenzhen"));
@@ -160,18 +243,26 @@ public class GitHubDeveloperRankUtils {
     }
 
     public static List<String> identifyDomains(String username, String token) {
-        JSONArray repos = makeRequest("users/" + username + "/repos", token).getJSONArray("repos");
+        JSONArray repos = new JSONArray(makeRequest("users/" + username + "/repos", token));
         Map<String, Integer> languages = new HashMap<>();
         Set<String> domains = new HashSet<>();
 
-        for (JSONObject repo : repos.jsonIter()) {
+        // 获取score属性最大的前5个对象
+        List<JSONObject> top5 = repos.toList(JSONObject.class).stream()
+                .map(JSONObject::new) // 转换为JSONObject
+                .sorted((o1, o2) -> Integer.compare(o2.getInt("stargazers_count"), o1.getInt("stargazers_count"))) // 按score降序排序
+                .limit(5) // 获取前5个
+                .collect(Collectors.toList()); // 收集为List
+
+        for (JSONObject repo : top5) {
             String language = repo.getStr("language");
             if (StrUtil.isNotBlank(language)) {
                 languages.put(language, languages.getOrDefault(language, 0) + 1);
             }
 
             String description = repo.getStr("description", "").toLowerCase();
-            JSONArray topics = makeRequest("repos/" + repo.getStr("full_name") + "/topics", token).getJSONArray("names");
+            JSONArray topics = new JSONObject(makeRequest("repos/" + repo.getStr("full_name") + "/topics", token))
+                                    .getJSONArray("names");
 
             Map<String, List<String>> domainKeywords = new HashMap<>();
             domainKeywords.put("web", Arrays.asList("web", "frontend", "backend", "fullstack"));
@@ -209,5 +300,51 @@ public class GitHubDeveloperRankUtils {
         }
 
         return new ArrayList<>(domains);
+    }
+
+    public static PriorityQueue<DeveloperSearchResult> fetchTop100Repositories(String token) {
+        // GitHub API查询，按星星数量降序排列，限制返回前100个结果
+        String query = "q=stars:>9999&order=desc&per_page=10"; // Stars数大于0
+        String url = "search/repositories" + "?" + query;
+
+        // 使用最小堆存储
+        PriorityQueue<DeveloperSearchResult> queue = new PriorityQueue<>(
+                Comparator.comparing(DeveloperSearchResult::getRanking));
+
+        String body = makeRequest(url, token);
+
+        if (body == null) {
+            return null;
+        }
+
+        // 解析JSON数据
+        JSONObject jsonObject = new JSONObject(body);
+        JSONArray items = jsonObject.getJSONArray("items");
+
+        // 打印Top 100仓库及所有者信息
+        for (int i = 0; i < items.size(); i++) {
+            JSONObject repo = items.getJSONObject(i);
+            JSONObject owner = repo.getJSONObject("owner"); // 获取仓库所有者信息
+            // 打印所有者信息
+            String login = owner.getStr("login");
+
+            DeveloperSearchResult developer = new DeveloperSearchResult();
+
+            Double rank = calculateTalentRank(login, token);
+            String location = predictNation(owner);
+            List<String> domains = identifyDomains(login, token);
+
+            developer.setData(owner.toBean(User.class));
+            developer.setRanking(rank);
+            developer.setPredictNation(location);
+            developer.setDomains(domains);
+            log.info("user: " + login);
+            log.info("domain -> " + domains);
+            log.info("predictNation -> " + location);
+            log.info("ranking -> " + rank);
+            queue.add(developer);
+        }
+
+        return queue;
     }
 }

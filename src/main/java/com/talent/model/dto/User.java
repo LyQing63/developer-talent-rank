@@ -5,14 +5,13 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Map;
-
-import lombok.Data;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 /**
  * 用户
@@ -62,6 +61,8 @@ public class User implements Serializable {
      */
     private String blog;
 
+    private String bio;
+
     /**
      * 住址
      */
@@ -100,12 +101,12 @@ public class User implements Serializable {
     /**
      * 创建时间
      */
-    private LocalDateTime createtime;
+    private Date createtime;
 
     /**
      * 更新时间
      */
-    private LocalDateTime updatetime;
+    private Date updatetime;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
@@ -138,7 +139,8 @@ public class User implements Serializable {
             && (this.getAccountfollowers() == null ? other.getAccountfollowers() == null : this.getAccountfollowers().equals(other.getAccountfollowers()))
             && (this.getAccountfollowing() == null ? other.getAccountfollowing() == null : this.getAccountfollowing().equals(other.getAccountfollowing()))
             && (this.getCreatetime() == null ? other.getCreatetime() == null : this.getCreatetime().equals(other.getCreatetime()))
-            && (this.getUpdatetime() == null ? other.getUpdatetime() == null : this.getUpdatetime().equals(other.getUpdatetime()));
+            && (this.getUpdatetime() == null ? other.getUpdatetime() == null : this.getUpdatetime().equals(other.getUpdatetime()))
+            && (this.getBio() == null ? other.getBio() == null : this.getBio().equals(other.getBio()));
     }
 
     @Override
@@ -162,6 +164,7 @@ public class User implements Serializable {
         result = prime * result + ((getAccountfollowing() == null) ? 0 : getAccountfollowing().hashCode());
         result = prime * result + ((getCreatetime() == null) ? 0 : getCreatetime().hashCode());
         result = prime * result + ((getUpdatetime() == null) ? 0 : getUpdatetime().hashCode());
+        result = prime * result + ((getBio() == null) ? 0 : getBio().hashCode());
         return result;
     }
 
@@ -188,62 +191,34 @@ public class User implements Serializable {
         sb.append(", accountfollowing=").append(accountfollowing);
         sb.append(", createtime=").append(createtime);
         sb.append(", updatetime=").append(updatetime);
+        sb.append(", bio=").append(bio);
         sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");
         return sb.toString();
     }
 
-    public static User parseUser(OAuth2User user) {
-
-        // 定义日期时间格式
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
-        User userDto = new User();
-        Map<String, Object> userAttributes = user.getAttributes();
-        userDto.setId(Long.valueOf((Integer) userAttributes.get("id")));
-        userDto.setLogin((String) userAttributes.get("login"));
-        userDto.setNodeid((String) userAttributes.get("node_id"));
-        userDto.setAvatarurl((String) userAttributes.get("avatar_url"));
-        userDto.setAccounttype((String) userAttributes.get("type"));
-        userDto.setAccountname((String) userAttributes.get("name"));
-        userDto.setCompany((String) userAttributes.get("company"));
-        userDto.setBlog((String) userAttributes.get("blog"));
-        userDto.setLocation((String) userAttributes.get("location"));
-        userDto.setEmail((String) userAttributes.get("email"));
-        userDto.setHireable((Integer) userAttributes.get("hireable"));
-        userDto.setPublicRepos((Integer) userAttributes.get("public_repos"));
-        userDto.setPublicGists((Integer) userAttributes.get("public_gists"));
-        userDto.setAccountfollowers((Integer) userAttributes.get("followers"));
-        userDto.setAccountfollowing((Integer) userAttributes.get("following"));
-        userDto.setCreatetime(LocalDateTime.parse((String) userAttributes.get("created_at"), formatter));
-        userDto.setUpdatetime(LocalDateTime.parse((String) userAttributes.get("updated_at"), formatter));
-        return userDto;
-    }
 
     public static User parseUser(JSONObject user) {
 
-        // 定义日期时间格式
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
         User userDto = new User();
-        Map<String, Object> userAttributes = user.toBean(Map.class);
-        userDto.setId(Long.valueOf((Integer) userAttributes.get("id")));
-        userDto.setLogin(userAttributes.get("login").toString());
-        userDto.setNodeid(userAttributes.get("node_id").toString());
-        userDto.setAvatarurl(userAttributes.get("avatar_url").toString());
-        userDto.setAccounttype(userAttributes.get("type").toString());
-        userDto.setAccountname(userAttributes.get("name").toString());
-        userDto.setCompany(userAttributes.get("company").toString());
-        userDto.setBlog(userAttributes.get("blog").toString());
-        userDto.setLocation(userAttributes.get("location").toString());
-        userDto.setEmail(userAttributes.get("email").toString());
-        userDto.setHireable(Convert.toInt(userAttributes.get("hireable"), 0));
-        userDto.setPublicRepos(Convert.toInt(userAttributes.get("public_repos"), 0));
-        userDto.setPublicGists(Convert.toInt(userAttributes.get("public_gists"), 0));
-        userDto.setAccountfollowers(Convert.toInt(userAttributes.get("followers"), 0));
-        userDto.setAccountfollowing(Convert.toInt(userAttributes.get("following"), 0));
-        userDto.setCreatetime(LocalDateTime.parse(userAttributes.get("created_at").toString(), formatter));
-        userDto.setUpdatetime(LocalDateTime.parse(userAttributes.get("updated_at").toString(), formatter));
+        userDto.setId(Long.valueOf(user.getInt("id")));
+        userDto.setLogin(user.getStr("login"));
+        userDto.setNodeid(user.getStr("node_id"));
+        userDto.setAvatarurl(user.getStr("avatar_url"));
+        userDto.setAccounttype(user.getStr("type"));
+        userDto.setAccountname(user.getStr("name"));
+        userDto.setCompany(user.getStr("company"));
+        userDto.setBlog(user.getStr("blog"));
+        userDto.setLocation(user.getStr("location"));
+        userDto.setEmail(user.getStr("email"));
+        userDto.setHireable(user.getInt("hireable"));
+        userDto.setPublicRepos(user.getInt("public_repos"));
+        userDto.setPublicGists(user.getInt("public_gists"));
+        userDto.setAccountfollowers(user.getInt("followers"));
+        userDto.setAccountfollowing(user.getInt("following"));
+        userDto.setCreatetime(user.getDate("created_at"));
+        userDto.setUpdatetime(user.getDate("updated_at"));
+        userDto.setBio(user.getStr("bio"));
         return userDto;
     }
 
