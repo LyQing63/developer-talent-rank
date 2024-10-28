@@ -2,18 +2,17 @@ package com.talent.controller;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.talent.common.BaseResponse;
 import com.talent.common.ErrorCode;
 import com.talent.common.ResultUtils;
-import com.talent.manager.RedisManager;
 import com.talent.model.dto.User;
 import com.talent.model.vo.UserLoginVO;
 import com.talent.service.UserService;
 import com.talent.utils.GitHubDeveloperRankUtils;
+import com.talent.utils.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -21,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.net.ssl.SSLSocketFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author 郑皓天
@@ -34,9 +31,6 @@ public class UserController {
 
     @Resource
     private UserService userService;
-
-    @Resource
-    private RedisManager redisManager;
 
     @Value("${github.client-id}")
     private String clientId;
@@ -93,51 +87,30 @@ public class UserController {
 
     @GetMapping("/currentUser")
     public BaseResponse<User> currentUser(@RequestHeader(value = "Authorization") String authorization) {
-        String[] s = authorization.split(" ");
-
-        if (s.length < 2) {
-            return ResultUtils.error(ErrorCode.PARAMS_ERROR, "未登录");
+        String token = TokenUtils.getToken(authorization);
+        if (StringUtils.isAnyBlank(token)) {
+            return ResultUtils.error(ErrorCode.NOT_LOGIN_ERROR, "未登录");
         }
+        String body = GitHubDeveloperRankUtils.makeRequest("user", token);
+        // 没有拿到user信息
+        if (StringUtils.isAnyBlank(body)) {
+            return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "获取github用户数据失败");
+        }
+        JSONObject userJSON = new JSONObject(body);
 
-        String body = GitHubDeveloperRankUtils.makeRequest("user", s[1]);
-        JSONObject user = new JSONObject(body);
-
-        return ResultUtils.success(user.toBean(User.class));
+        User user = User.parseUser(userJSON);
+        return ResultUtils.success(user);
     }
 
     @GetMapping("/getDeveloper")
-    public BaseResponse<User> getDeveloper(String login, @RequestHeader(value = "Authorization") String token) {
+    public BaseResponse<User> getDeveloper(String login, @RequestHeader(value = "Authorization") String authorization) {
 
-        // 从Redis中获取
-        Object userCache = redisManager.getUserInfo(login);
-        if (userCache == null) {
-            // 从数据库中搜索
-            QueryWrapper queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("login", login);
-            User userSaved = userService.getOne(queryWrapper);
-            if (userSaved == null) {
-                // 数据库中也没有数据
-                User userFromGithub = userService.getUserFromGithub(login, token);
-                // 不存在这个用户
-                if (userFromGithub == null) {
-                    return ResultUtils.error(ErrorCode.PARAMS_ERROR, "用户不存在");
-                }
+        String token = TokenUtils.getToken(authorization);
+        User userInfo = userService.getUserInfo(login, token);
 
-                // 数据库中没有数据，保存
-                boolean save = userService.save(userFromGithub);
-                if (!save) {
-                    return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "数据库存储失败");
-                }
-                // 再缓存到redis中
-                redisManager.cacheDeveloperInfo(login, userFromGithub, 30, TimeUnit.MINUTES);
-
-                return ResultUtils.success(userFromGithub);
-
-            }
-            return ResultUtils.success(userSaved);
-        }
-
-        return ResultUtils.success((User) userCache);
+        return ResultUtils.success(userInfo);
     }
+
+
 
 }
