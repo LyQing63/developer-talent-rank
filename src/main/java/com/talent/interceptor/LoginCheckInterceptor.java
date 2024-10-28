@@ -15,8 +15,13 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
      //目标资源方法执行前执行。 返回true：放行    返回false：不放行
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 登录请求放行
+        if ("/login/oauth".equals(request.getRequestURI())){
+            return true;
+        }
+
         //1,先获取请求头
-        String token = request.getHeader("token");
+        String token = request.getHeader("Authorization");
         response.setContentType("application/json;charset = UTF-8");
         ObjectMapper mapper = new ObjectMapper();
         //2,判断请求头是否存在
