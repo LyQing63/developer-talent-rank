@@ -2,10 +2,11 @@ package com.talent.model.vo;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class RatingVO {
+public class RatingVO implements Serializable {
     private String name;
     private String message;
     private Integer score;
