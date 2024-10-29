@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.talent.mapper.DeveloperAnalysisMapper">
+
+    <resultMap id="BaseResultMap" type="com.talent.model.dto.DeveloperAnalysis">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="totalranking" column="totalRanking" jdbcType="INTEGER"/>
+            <result property="biorating" column="bioRating" jdbcType="INTEGER"/>
+            <result property="repodescriptionrating" column="repoDescriptionRating" jdbcType="INTEGER"/>
+            <result property="webpagerating" column="webpageRating" jdbcType="INTEGER"/>
+            <result property="backlinkrating" column="backlinkRating" jdbcType="INTEGER"/>
+            <result property="userpopularity" column="userPopularity" jdbcType="INTEGER"/>
+            <result property="repopopularity" column="repoPopularity" jdbcType="INTEGER"/>
+            <result property="locationconfidence" column="locationConfidence" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,totalRanking,bioRating,
+        repoDescriptionRating,webpageRating,backlinkRating,
+        userPopularity,repoPopularity,locationConfidence
+    </sql>
+</mapper>
