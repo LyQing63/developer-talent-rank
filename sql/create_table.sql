@@ -34,3 +34,16 @@ create table if not exists user
 ) comment '用户' collate = utf8mb4_unicode_ci;
 
 -- "bio": "There once was...","twitter_username": "monatheoctocat",
+
+create table if not exists developer_analysis
+(
+    id  bigint  not null comment 'id' primary key,
+    totalRanking int                null comment '排名分数',
+    bioRating   int                null comment 'bio 评分',
+    repoDescriptionRating int null comment 'repo_description 评分',
+    webpageRating int                null comment 'webpage 评分',
+    backlinkRating int               null comment 'backlink 评分',
+    userPopularity int                null comment '用户热度评分',
+    repoPopularity int                null comment '仓库热度评分',
+    locationConfidence int               null comment '住址置信度'
+) comment '开发者分析数据' collate = utf8mb4_unicode_ci;
