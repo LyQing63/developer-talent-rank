@@ -13,6 +13,7 @@ import com.talent.utils.GitHubDeveloperRankUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
 * @author yjxx_2022
@@ -75,6 +76,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // Redis中获取到了
         return (User) userCache;
+    }
+
+    @Override
+    public boolean addUsers(List<User> users) {
+
+        if (users.isEmpty()) {
+            return false;
+        }
+
+        users.forEach(this::saveOrUpdate);
+
+        return true;
+    }
+
+    @Override
+    public User getUserByAccount(String account) {
+        QueryWrapper queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("login", account);
+        User one = this.getOne(queryWrapper);
+        return one;
     }
 }
 
