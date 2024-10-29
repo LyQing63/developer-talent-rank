@@ -11,6 +11,10 @@ import com.talent.model.dto.User;
 import com.talent.model.vo.RatingVO;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,7 +55,7 @@ public class GitHubDeveloperRankUtils {
         return new JSONArray(makeRequest("users/" + account + "/repos?&per_page=250", token));
     }
 
-    public static List<RatingVO> getRatingResult(User user, String token) {
+    public static UserRating getUserRating(User user, String token) {
         UserRating userRating = new UserRating(user, getReposInfo(user.getLogin(), token));
         userRating.ratePopularity();
         userRating.rateBacklinks();
@@ -59,6 +63,10 @@ public class GitHubDeveloperRankUtils {
         userRating.rateWebpage();
         userRating.rateRepoPopularity();
         userRating.rateBio();
+        return userRating;
+    }
+
+    public static List<RatingVO> getRatingResult(UserRating userRating) {
 
         List<String> repoDescLength = userRating.getRepos().stream()
                 .filter(r -> r.getDescription() == null || r.getDescription().split(" ").length < 5)
@@ -93,11 +101,7 @@ public class GitHubDeveloperRankUtils {
     }
 
     public static Integer getRankingScore(List<RatingVO> ratingVOS) {
-        // Sum of all scores
-//        int scoreSum = ratingVOS.stream()
-//                .filter(r -> !r.getPartial()) // Assuming getPartial() returns the value of 'Partial'
-//                .mapToInt(RatingVO::getScore) // Using method reference to get the score
-//                .sum();
+
         int scoreSum = 0;
         for (int i = 0; i < ratingVOS.size(); i++) {
             if (!ratingVOS.get(i).getPartial()) {
@@ -302,49 +306,108 @@ public class GitHubDeveloperRankUtils {
         return new ArrayList<>(domains);
     }
 
-    public static PriorityQueue<DeveloperSearchResult> fetchTop100Repositories(String token) {
-        // GitHub API查询，按星星数量降序排列，限制返回前100个结果
-        String query = "q=stars:>9999&order=desc&per_page=10"; // Stars数大于0
-        String url = "search/repositories" + "?" + query;
+    public static List<User> fetchTop100Repositories(String token) {
 
-        // 使用最小堆存储
-        PriorityQueue<DeveloperSearchResult> queue = new PriorityQueue<>(
-                Comparator.comparing(DeveloperSearchResult::getRanking));
+        List<User> res = new ArrayList<>();
+
+        // GitHub API查询，按星星数量降序排列，限制返回前100个结果
+        String query = "q=stars:>9999&order=desc&per_page=100"; // Stars数大于0
+        String url = "search/repositories" + "?" + query;
 
         String body = makeRequest(url, token);
 
         if (body == null) {
-            return null;
+            return res;
         }
 
         // 解析JSON数据
         JSONObject jsonObject = new JSONObject(body);
         JSONArray items = jsonObject.getJSONArray("items");
-
+        List<User> developers = new ArrayList<>();
         // 打印Top 100仓库及所有者信息
         for (int i = 0; i < items.size(); i++) {
             JSONObject repo = items.getJSONObject(i);
             JSONObject owner = repo.getJSONObject("owner"); // 获取仓库所有者信息
-            // 打印所有者信息
             String login = owner.getStr("login");
 
-            DeveloperSearchResult developer = new DeveloperSearchResult();
-
-            Double rank = calculateTalentRank(login, token);
-            String location = predictNation(owner);
-            List<String> domains = identifyDomains(login, token);
-
-            developer.setData(owner.toBean(User.class));
-            developer.setRanking(rank);
-            developer.setPredictNation(location);
-            developer.setDomains(domains);
-            log.info("user: " + login);
-            log.info("domain -> " + domains);
-            log.info("predictNation -> " + location);
-            log.info("ranking -> " + rank);
-            queue.add(developer);
+            // 获取owner信息
+            JSONObject developerInfo = GitHubDeveloperRankUtils.getDeveloperInfo(login, token);
+            developers.add(User.parseUser(developerInfo));
+            // 打印所有者信息
         }
 
-        return queue;
+        return res;
+    }
+
+    public static void fetchTop100RepositoriesToCSV(String token) {
+
+        List<User> res = new ArrayList<>();
+
+        // GitHub API查询，按星星数量降序排列，限制返回前100个结果
+        String query = "q=stars:>9999&order=desc&per_page=100"; // Stars数大于0
+        String url = "search/repositories" + "?" + query;
+
+        String body = makeRequest(url, token);
+
+
+        // 解析JSON数据
+        JSONObject jsonObject = new JSONObject(body);
+        JSONArray items = jsonObject.getJSONArray("items");
+        List<User> developers = new ArrayList<>();
+        // 打印Top 100仓库及所有者信息
+        for (int i = 0; i < items.size(); i++) {
+            JSONObject repo = items.getJSONObject(i);
+            JSONObject owner = repo.getJSONObject("owner"); // 获取仓库所有者信息
+            String login = owner.getStr("login");
+            String followersUrl = owner.getStr("followers_url");
+
+            // 获取owner信息
+            JSONObject developerInfo = GitHubDeveloperRankUtils.getDeveloperInfo(login, token);
+            developers.add(User.parseUser(developerInfo));
+            // 获取follower信息
+            String followersStr = HttpRequest.get(followersUrl + "?per_page=20").header("Authorization", "Bearer " + token)
+                    .execute()
+                    .body();
+            JSONArray followersJSONArray = new JSONArray(followersStr);
+            for (JSONObject followerJSON : followersJSONArray.jsonIter()) {
+                developers.add(User.parseUser(followerJSON));
+            }
+            // 获取following信息
+            String followingStr = HttpRequest.get("https://api.github.com/users/"+login+"/following" + "?per_page=20").header("Authorization", "Bearer " + token)
+                    .execute()
+                    .body();
+            JSONArray followingJSONArray = new JSONArray(followingStr);
+            for (JSONObject followingJSON : followingJSONArray.jsonIter()) {
+                developers.add(User.parseUser(followingJSON));
+            }
+            System.out.println(developers.size());
+            // 打印所有者信息
+        }
+        // 文件写入操作
+        // 获取项目根目录路径
+        String projectRootPath = System.getProperty("user.dir");
+        String fileName = projectRootPath + File.separator + "/doc/developer.csv";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            // 写入表头
+            writer.write("ID,login,Company,Blog,Location,Email,Hireable\n");
+            // 写入每个User对象
+            for (User developer : developers) {
+                StringBuilder developerDataBuilder = new StringBuilder();
+                developerDataBuilder
+                        .append(developer.getId()).append(",")
+                        .append(developer.getLogin()).append(",")
+                        .append(developer.getCompany()).append(",")
+                        .append(developer.getBlog()).append(",")
+                        .append(developer.getBio()).append(",")
+                        .append(developer.getLocation()).append(",")
+                        .append(developer.getEmail()).append(",")
+                        .append(developer.getHireable());
+
+                writer.write(developerDataBuilder + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("CSV 文件已生成: ");
     }
 }
