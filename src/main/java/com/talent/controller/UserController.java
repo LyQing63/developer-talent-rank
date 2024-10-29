@@ -14,10 +14,7 @@ import com.talent.utils.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -103,10 +100,19 @@ public class UserController {
     }
 
     @GetMapping("/getDeveloper")
-    public BaseResponse<User> getDeveloper(String login, @RequestHeader(value = "Authorization") String authorization) {
-
+    public BaseResponse<User> getDeveloper(@RequestParam(required = false) String login,
+                                           @RequestParam(required = false) Long id,
+                                           @RequestHeader(value = "Authorization") String authorization) {
+        if (StringUtils.isAnyBlank(login) && id == null) {
+            return ResultUtils.error(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        User userInfo;
         String token = TokenUtils.getToken(authorization);
-        User userInfo = userService.getUserInfo(login, token);
+        if (!StringUtils.isAnyBlank(login)) {
+            userInfo = userService.getUserInfo(login, token);
+        } else {
+            userInfo = userService.getById(id);
+        }
 
         return ResultUtils.success(userInfo);
     }
