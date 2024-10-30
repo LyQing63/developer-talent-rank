@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.talent.common.BaseResponse;
 import com.talent.common.ErrorCode;
 import com.talent.common.ResultUtils;
+import com.talent.manager.RedisLimiterManager;
 import com.talent.manager.RedisManager;
 import com.talent.model.bo.UserRating;
 import com.talent.model.dto.DeveloperAnalysis;
@@ -51,10 +52,17 @@ public class RankController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private RedisLimiterManager redisLimiterManager;
+
     @GetMapping("/score")
     public BaseResponse getRatingResult(String account, @RequestHeader(value = "Authorization") String authorization) {
 
         String token = TokenUtils.getToken(authorization);
+
+        // 用户限流，对token进行
+        redisLimiterManager.doRateLimiter(token);
+
         // 从redis缓存中读取
         RatingResultVO developerRankingInfo = (RatingResultVO) redisManager.getDeveloperRankingInfo(account);
         if (developerRankingInfo != null) {
@@ -107,7 +115,6 @@ public class RankController {
 
         String body = GitHubDeveloperRankUtils.makeRequest(url, token);
 
-
         // 解析JSON数据
         JSONObject jsonObject = new JSONObject(body);
         JSONArray items = jsonObject.getJSONArray("items");
@@ -119,11 +126,10 @@ public class RankController {
             String login = owner.getStr("login");
 
             // 获取owner信息
-            JSONObject developerInfo = GitHubDeveloperRankUtils.getDeveloperInfo(login, token);
-            User developer = User.parseUser(developerInfo);
-            developers.add(developer);
+            User developerInfo = User.parseUser(GitHubDeveloperRankUtils.getDeveloperInfo(login, token));
+            developers.add(developerInfo);
 
-            UserRating userRating = GitHubDeveloperRankUtils.getUserRating(developer, token);
+            UserRating userRating = GitHubDeveloperRankUtils.getUserRating(developerInfo, token);
             // 分析rate分数
             List<RatingVO> ratingResults = GitHubDeveloperRankUtils.getRatingResult(userRating);
             Integer totalScore = GitHubDeveloperRankUtils.getRankingScore(ratingResults);
@@ -155,7 +161,14 @@ public class RankController {
     }
 
     @GetMapping("/totalRating")
-    public BaseResponse getTotalRating() {
+    public BaseResponse getTotalRating(@RequestHeader(value = "Authorization") String authorization) {
+        String token = TokenUtils.getToken(authorization);
+        if (token == null) {
+            return ResultUtils.error(ErrorCode.PARAMS_ERROR, "未登录");
+        }
+        // 用户限流，对token进行
+        redisLimiterManager.doRateLimiter(token);
+
         List<User> list = userService.list();
         List<DeveloperAnalysis> developerAnalysisList = new ArrayList<>();
         for (User developer : list) {

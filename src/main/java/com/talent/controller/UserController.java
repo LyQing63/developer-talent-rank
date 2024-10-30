@@ -6,6 +6,7 @@ import cn.hutool.json.JSONObject;
 import com.talent.common.BaseResponse;
 import com.talent.common.ErrorCode;
 import com.talent.common.ResultUtils;
+import com.talent.manager.RedisLimiterManager;
 import com.talent.model.dto.User;
 import com.talent.model.vo.UserLoginVO;
 import com.talent.service.UserService;
@@ -29,6 +30,9 @@ public class UserController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private RedisLimiterManager redisLimiterManager;
+
     @Value("${github.client-id}")
     private String clientId;
 
@@ -39,6 +43,9 @@ public class UserController {
 
     @GetMapping("/oauth")
     public BaseResponse<UserLoginVO> login(String code) {
+
+        // 用户限流，对code进行
+        redisLimiterManager.doRateLimiter(code);
 
         if (code == null) {
             return ResultUtils.error(ErrorCode.PARAMS_ERROR, "code不能为空");
@@ -85,6 +92,9 @@ public class UserController {
     @GetMapping("/currentUser")
     public BaseResponse<User> currentUser(@RequestHeader(value = "Authorization") String authorization) {
         String token = TokenUtils.getToken(authorization);
+        // 用户限流，对token进行
+        redisLimiterManager.doRateLimiter(token);
+
         if (StringUtils.isAnyBlank(token)) {
             return ResultUtils.error(ErrorCode.NOT_LOGIN_ERROR, "未登录");
         }
@@ -108,6 +118,9 @@ public class UserController {
         }
         User userInfo;
         String token = TokenUtils.getToken(authorization);
+        // 用户限流，对token进行
+        redisLimiterManager.doRateLimiter(token);
+
         if (!StringUtils.isAnyBlank(login)) {
             userInfo = userService.getUserInfo(login, token);
         } else {
