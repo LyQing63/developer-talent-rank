@@ -28,7 +28,7 @@ create table if not exists user
     accountFollowing int            null comment '偶像数',
     createTime   datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime   datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-
+    bio varchar(256) null comment 'bio',
     index idx_login (login),
     index idx_email (email)
 ) comment '用户' collate = utf8mb4_unicode_ci;
