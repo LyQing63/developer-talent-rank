@@ -24,6 +24,10 @@ public class RedisManager {
 
     private static final long RATING_CACHE_TIME_MINUTES = 30;
 
+    private static final String CACHE_TASK_STATUS = "task:";
+
+    private static final long CACHE_TASK_STATUS_DAYS = 30;
+
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
@@ -38,6 +42,10 @@ public class RedisManager {
 
     public void cacheDeveloperRankInfo(String account, RatingResultVO ratingResultVO) {
         cacheInfo(RATING_CACHE_KEY_PREFIX, account, ratingResultVO, RATING_CACHE_TIME_MINUTES, TimeUnit.MINUTES);
+    }
+
+    public void cacheTaskStatus(String taskId, String status) {
+        cacheInfo(CACHE_TASK_STATUS, taskId, status, RATING_CACHE_TIME_MINUTES, TimeUnit.MINUTES);
     }
 
     // 设置信息缓存
@@ -58,6 +66,10 @@ public class RedisManager {
     // 获取开发者信息缓存
     public Object getDeveloperInfo(String account) {
         return getInfo(DEVELOPER_CACHE_KEY_PREFIX, account);
+    }
+
+    public Object getTaskStatusInfo(String taskId) {
+        return getInfo(DEVELOPER_CACHE_KEY_PREFIX, taskId);
     }
 
     // 获取排名信息缓存
@@ -81,6 +93,10 @@ public class RedisManager {
 
     public void removeDeveloperRankingInfo(String account) {
         removeInfo(RATING_CACHE_KEY_PREFIX, account);
+    }
+
+    public void removeTaskStatus(String taskId) {
+        removeInfo(RATING_CACHE_KEY_PREFIX, taskId);
     }
 
 }

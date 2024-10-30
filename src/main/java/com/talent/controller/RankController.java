@@ -55,6 +55,9 @@ public class RankController {
     @Resource
     private RedisLimiterManager redisLimiterManager;
 
+    @Resource
+    private GitHubDeveloperRankUtils gitHubDeveloperRankUtils;
+
     @GetMapping("/score")
     public BaseResponse getRatingResult(String account, @RequestHeader(value = "Authorization") String authorization) {
 
@@ -72,7 +75,7 @@ public class RankController {
         User developer = null;
         developer = userService.getUserByAccount(account);
         if (developer == null) {
-            JSONObject developerInfo = GitHubDeveloperRankUtils.getDeveloperInfo(account, token);
+            JSONObject developerInfo = gitHubDeveloperRankUtils.getDeveloperInfo(account, token);
             developer = User.parseUser(developerInfo);
         }
         redisManager.cacheDeveloperInfo(account, developer);
@@ -83,10 +86,10 @@ public class RankController {
         if (ratingResultVO != null) {
             return ResultUtils.success(ratingResultVO);
         }
-        UserRating userRating = GitHubDeveloperRankUtils.getUserRating(developer, token);
+        UserRating userRating = gitHubDeveloperRankUtils.getUserRating(developer, token);
         // 分析rate分数
-        List<RatingVO> ratingResults = GitHubDeveloperRankUtils.getRatingResult(userRating);
-        Integer totalScore = GitHubDeveloperRankUtils.getRankingScore(ratingResults);
+        List<RatingVO> ratingResults = gitHubDeveloperRankUtils.getRatingResult(userRating);
+        Integer totalScore = gitHubDeveloperRankUtils.getRankingScore(ratingResults);
         ratingResultVO = new RatingResultVO();
         ratingResultVO.setRatingResults(ratingResults);
         ratingResultVO.setTotalScore(totalScore);
@@ -113,7 +116,7 @@ public class RankController {
         String query = "q=stars:>9999&order=desc&per_page=100"; // Stars数大于0
         String url = "search/repositories" + "?" + query;
 
-        String body = GitHubDeveloperRankUtils.makeRequest(url, token);
+        String body = gitHubDeveloperRankUtils.makeRequest(url, token);
 
         // 解析JSON数据
         JSONObject jsonObject = new JSONObject(body);
@@ -126,13 +129,13 @@ public class RankController {
             String login = owner.getStr("login");
 
             // 获取owner信息
-            User developerInfo = User.parseUser(GitHubDeveloperRankUtils.getDeveloperInfo(login, token));
+            User developerInfo = User.parseUser(gitHubDeveloperRankUtils.getDeveloperInfo(login, token));
             developers.add(developerInfo);
 
-            UserRating userRating = GitHubDeveloperRankUtils.getUserRating(developerInfo, token);
+            UserRating userRating = gitHubDeveloperRankUtils.getUserRating(developerInfo, token);
             // 分析rate分数
-            List<RatingVO> ratingResults = GitHubDeveloperRankUtils.getRatingResult(userRating);
-            Integer totalScore = GitHubDeveloperRankUtils.getRankingScore(ratingResults);
+            List<RatingVO> ratingResults = gitHubDeveloperRankUtils.getRatingResult(userRating);
+            Integer totalScore = gitHubDeveloperRankUtils.getRankingScore(ratingResults);
             RatingResultVO ratingResultVO = new RatingResultVO();
             ratingResultVO.setRatingResults(ratingResults);
             ratingResultVO.setTotalScore(totalScore);

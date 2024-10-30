@@ -33,6 +33,9 @@ public class UserController {
     @Resource
     private RedisLimiterManager redisLimiterManager;
 
+    @Resource
+    private GitHubDeveloperRankUtils gitHubDeveloperRankUtils;
+
     @Value("${github.client-id}")
     private String clientId;
 
@@ -71,7 +74,7 @@ public class UserController {
         UserLoginVO userLoginVO = new UserLoginVO();
         userLoginVO.setToken(token);
 
-        String userBody = GitHubDeveloperRankUtils.makeRequest("user", token);
+        String userBody = gitHubDeveloperRankUtils.makeRequest("user", token);
         User user1 = User.parseUser(new JSONObject(userBody));
         userLoginVO.setUser(user1);
         Long id = user1.getId();
@@ -98,7 +101,7 @@ public class UserController {
         if (StringUtils.isAnyBlank(token)) {
             return ResultUtils.error(ErrorCode.NOT_LOGIN_ERROR, "未登录");
         }
-        String body = GitHubDeveloperRankUtils.makeRequest("user", token);
+        String body = gitHubDeveloperRankUtils.makeRequest("user", token);
         // 没有拿到user信息
         if (StringUtils.isAnyBlank(body)) {
             return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "获取github用户数据失败");

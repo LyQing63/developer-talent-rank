@@ -27,10 +27,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Resource
     private RedisManager redisManager;
 
+    @Resource
+    private GitHubDeveloperRankUtils gitHubDeveloperRankUtils;
+
     @Override
     public User getUserFromGithub(String account, String token) {
 
-        JSONObject developerInfo = GitHubDeveloperRankUtils.getDeveloperInfo(account, token);
+        JSONObject developerInfo = gitHubDeveloperRankUtils.getDeveloperInfo(account, token);
 
         if (developerInfo.get("status") != "404") {
             return null;
