@@ -138,8 +138,8 @@ export default defineConfig({
     {
       requestLibPath: "import { request } from '@umijs/max'",
       // 或者使用在线的版本
-      // schemaPath: "https://gw.alipayobjects.com/os/antfincdn/M%24jrzTTYJN/oneapi.json"
-      schemaPath: join(__dirname, 'openapi.json'),
+      schemaPath: "http://1024.viwipiediema.com:10032/api/v3/api-docs/default",
+      // schemaPath: join(__dirname, 'openapi.json'),
       mock: false,
     },
   ],

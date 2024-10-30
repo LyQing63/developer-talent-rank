@@ -121,20 +121,17 @@ const Login: React.FC = () => {
       return path.slice(6);
     };
 
-    const path = history.location.search
+    const path = history.location.search;
     const code = getCodeFromURL(path)
     if (code !== null && code !== '') {
-      login({code}).then((res) => {
-        if(res.code===200)
-        {
-          setInitialState({
-            ...initialState,
-            token: res.data.token,
+      login({code:code}).then((res) => {
+        if(res.code===0) {
+          setInitialState((s) => ({
+            ...s,
             currentUser: res.data.user,
-          });
-          fetchUserInfo();
-          const urlParams = new URL(window.location.href).searchParams;
-          history.push(urlParams.get('redirect') || '/');
+          }))
+          localStorage.setItem("token", res.data.token);
+          // history.push('/Search');
         }
       })
     }
