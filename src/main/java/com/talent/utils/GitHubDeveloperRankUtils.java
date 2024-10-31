@@ -9,7 +9,7 @@ import cn.hutool.json.JSONObject;
 import com.talent.model.bo.*;
 import com.talent.model.dto.User;
 import com.talent.model.vo.RatingVO;
-import com.talent.mq.ApiProducer;
+import com.talent.mq.Producer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class GitHubDeveloperRankUtils {
 
     @Resource
-    private ApiProducer apiProducer;
+    private Producer apiProducer;
 
     private String baseUrl = "https://api.github.com";
 
@@ -53,11 +53,15 @@ public class GitHubDeveloperRankUtils {
 
     public void asynMakeRequest(String endpoint, String token) {
         String url = StrUtil.format("{}/{}", baseUrl, endpoint);
-        apiProducer.sendMessage(url + " " + token);
+        apiProducer.sendMessageToAPI(url + " " + token);
     }
 
     public JSONObject getDeveloperInfo (String account, String token) {
         return new JSONObject(makeRequest("users/" + account, token));
+    }
+
+    public JSONObject getReadme (String account, String token) {
+        return new JSONObject(makeRequest("repos/" + account + "/" + account + "/readme", token));
     }
 
     public JSONArray getStarredInfo (String account, String token) {
@@ -135,7 +139,7 @@ public class GitHubDeveloperRankUtils {
         String query = "since="+ since +"&per_page=100"; // Stars数大于0
         String url = "/users?" + query;
 
-        apiProducer.sendMessage(baseUrl + url + " "  + token);
+        apiProducer.sendMessageToAPI(baseUrl + url + " "  + token);
     }
 
     public void fetchTop100RepositoriesToCSV(String token) {

@@ -6,7 +6,10 @@ import cn.hutool.http.HttpStatus;
 import cn.hutool.json.JSONObject;
 import com.rabbitmq.client.Channel;
 import com.talent.constant.RabbitMQConstant;
+import com.talent.manager.RedisManager;
 import com.talent.model.dto.User;
+import com.talent.model.vo.DescriptionVO;
+import com.talent.service.AIService;
 import com.talent.service.UserService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,14 +23,20 @@ import javax.annotation.Resource;
 
 @Component
 @Slf4j
-public class ApiConsumer {
+public class Consumer {
 
     @Resource
     private UserService userService;
 
+    @Resource
+    private AIService aiService;
+
+    @Resource
+    private RedisManager redisManager;
+
     @SneakyThrows
-    @RabbitListener(queues = {RabbitMQConstant.API_QUEUE_NAME}, ackMode = "MANNUAL")
-    public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long delivery) {
+    @RabbitListener(queues = {RabbitMQConstant.API_QUEUE_NAME}, ackMode = "MANUAL")
+    public void receiveMessageAPI(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long delivery) {
         log.info("receivedMessage message, exchange:{}, routeKey:{}",
                 message,
                 RabbitMQConstant.API_EXCHANGE_NAME,
@@ -62,6 +71,30 @@ public class ApiConsumer {
 
         // 存入数据库
         userService.saveOrUpdate(User.parseUser(userJSON));
+
+        channel.basicAck(delivery, false);
+    }
+
+    @SneakyThrows
+    @RabbitListener(queues = {RabbitMQConstant.AI_QUEUE_NAME}, ackMode = "MANUAL")
+    public void receiveMessageAI(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long delivery) {
+        log.info("receivedMessage message, exchange:{}, routeKey:{}",
+                message,
+                RabbitMQConstant.AI_EXCHANGE_NAME,
+                RabbitMQConstant.AI_ROUTING_KEY);
+
+        String[] messages = message.split(" ");
+
+        String login = messages[0];
+        String token = messages[1];
+        String id = messages[2];
+
+        String description = aiService.getDescription(login, token);
+        JSONObject desJSON = new JSONObject(description);
+        User userInfo = userService.getUserInfo(login, token);
+
+        DescriptionVO descriptionVO = DescriptionVO.parseDescriptionVO(userInfo, desJSON);
+        redisManager.cacheTaskStatus(id, descriptionVO);
 
         channel.basicAck(delivery, false);
     }

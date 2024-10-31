@@ -1,6 +1,7 @@
 package com.talent.manager;
 
 import com.talent.model.dto.User;
+import com.talent.model.vo.DescriptionVO;
 import com.talent.model.vo.RatingResultVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -44,8 +45,8 @@ public class RedisManager {
         cacheInfo(RATING_CACHE_KEY_PREFIX, account, ratingResultVO, RATING_CACHE_TIME_MINUTES, TimeUnit.MINUTES);
     }
 
-    public void cacheTaskStatus(String taskId, String status) {
-        cacheInfo(CACHE_TASK_STATUS, taskId, status, RATING_CACHE_TIME_MINUTES, TimeUnit.MINUTES);
+    public void cacheTaskStatus(String taskId, DescriptionVO descriptionVO) {
+        cacheInfo(CACHE_TASK_STATUS, taskId, descriptionVO, CACHE_TASK_STATUS_DAYS, TimeUnit.MINUTES);
     }
 
     // 设置信息缓存
@@ -69,7 +70,7 @@ public class RedisManager {
     }
 
     public Object getTaskStatusInfo(String taskId) {
-        return getInfo(DEVELOPER_CACHE_KEY_PREFIX, taskId);
+        return getInfo(CACHE_TASK_STATUS, taskId);
     }
 
     // 获取排名信息缓存

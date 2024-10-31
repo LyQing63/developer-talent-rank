@@ -16,6 +16,14 @@ public class MQMain {
             channel.queueDeclare(RabbitMQConstant.API_QUEUE_NAME, true, false, false, null);
             channel.queueBind(RabbitMQConstant.API_QUEUE_NAME, RabbitMQConstant.API_EXCHANGE_NAME, RabbitMQConstant.API_ROUTING_KEY);
 
+            Connection connection1 = connectionFactory.newConnection();
+            Channel channel1 = connection1.createChannel();
+            channel1.exchangeDeclare(RabbitMQConstant.AI_EXCHANGE_NAME, "direct");
+
+            channel1.queueDeclare(RabbitMQConstant.AI_QUEUE_NAME, true, false, false, null);
+            channel1.queueBind(RabbitMQConstant.AI_QUEUE_NAME, RabbitMQConstant.AI_EXCHANGE_NAME, RabbitMQConstant.AI_ROUTING_KEY);
+
+
         } catch (Exception e) {
 
         }

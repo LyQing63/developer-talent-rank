@@ -9,12 +9,12 @@ import javax.annotation.Resource;
 
 @Component
 @Slf4j
-public class ApiProducer {
+public class Producer {
 
     @Resource
     private RabbitTemplate rabbitTemplate;
 
-    public void sendMessage(String message) {
+    public void sendMessageToAPI(String message) {
         log.info("Sending message:{}, exchange:{}, routeKey:{}",
                 message,
                 RabbitMQConstant.API_EXCHANGE_NAME,
@@ -22,6 +22,17 @@ public class ApiProducer {
         rabbitTemplate.convertAndSend(
                 RabbitMQConstant.API_EXCHANGE_NAME,
                 RabbitMQConstant.API_ROUTING_KEY,
+                message);
+    }
+
+    public void sendMessageToAI(String message) {
+        log.info("Sending message:{}, exchange:{}, routeKey:{}",
+                message,
+                RabbitMQConstant.AI_EXCHANGE_NAME,
+                RabbitMQConstant.AI_ROUTING_KEY);
+        rabbitTemplate.convertAndSend(
+                RabbitMQConstant.AI_EXCHANGE_NAME,
+                RabbitMQConstant.AI_ROUTING_KEY,
                 message);
     }
 
