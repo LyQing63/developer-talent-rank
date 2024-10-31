@@ -7,8 +7,33 @@ import request from 'umi-request';
 import styles from './index.less';
 import {getDeveloper} from "@/services/ant-design-pro/userController";
 import {getTotalRating} from "@/services/ant-design-pro/rankController";
+import user from "../../../mock/user";
+import Footer from "@/components/Footer";
 
 type SearchProps = GetProps<typeof Input.Search>;
+
+type RankedUser= {
+  id?: number;
+  login?: string;
+  nodeid?: string;
+  avatarurl?: string;
+  accounttype?: string;
+  accountname?: string;
+  company?: string;
+  blog?: string;
+  bio?: string;
+  location?: string;
+  email?: string;
+  hireable?: number;
+  publicRepos?: number;
+  publicGists?: number;
+  accountfollowers?: number;
+  accountfollowing?: number;
+  createtime?: string;
+  updatetime?: string;
+  score: number
+};
+
 
 const { Search: Index } = Input;
 
@@ -50,9 +75,9 @@ const MySearch: React.FC = () => (
 
 
 const App: React.FC = () => {
-  const [ranks, setRanks] = useState<API.User[]>([]);
-
-  // const MyTable: React.FC = ({ style }: MyTableProps) => (
+  const [ranks, setRanks] = useState<RankedUser[]>([]);
+  const [loading, setLading] = useState<boolean>(true);
+  // const MyTable: React.FC = ({ style }: MyTableP rops) => (
   //
   // );
 
@@ -69,26 +94,32 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    if (ranks.length < 10) {
-      const getRankedUsers = () => {
-        getTotalRating().then((r) => {
-          if (r.code === 0) {
-            const rankResult = r.data;
-            for (let i = 0; i < 10; i++) {
-              const id = rankResult[i].id
-              getDeveloper({id: id}).then((rs) => {
-                if (rs.code === 0) {
-                  setRanks((preRanks) => [...preRanks, rs.data]);
-                }
-              });
-            }
-          }
-        });
-      }
-      getRankedUsers();
-    }
-  }, []);
 
+      const fetchUsers = async () => {
+
+        const response = await getTotalRating();
+
+        if (response.code === 0) {
+          const rankResult = response.data;
+
+          const userPromises = rankResult.map(async (rank: any) => {
+            const devResponse = await getDeveloper({ id: rank.id });
+            return {
+              ...devResponse.data,
+              score: rank.totalranking,
+            } as RankedUser;
+          });
+          // 等待所有 Promise 完成
+          const users = await Promise.all(userPromises);
+
+          // 根据 score 降序排序
+          const sortedUsers = users.sort((a, b) => b.score - a.score);
+          setRanks(sortedUsers); // 更新状态
+          setLading(false)
+        }
+      }
+    fetchUsers()
+  }, []);
 
   return (
     <div style={{
@@ -108,7 +139,7 @@ const App: React.FC = () => {
           margin: '0 auto'
         }}
       >
-        <ProTable<API.User>
+        <ProTable<RankedUser>
           // className={styles.mytable}
           toolBarRender={() => {
             return [
@@ -117,17 +148,16 @@ const App: React.FC = () => {
               </Button>,
             ];
           }}
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+          })}
+          loading={loading} // 控制加载状态
           search={{}}
           metaTitle="accountname"
-          rowKey="id"
+          rowKey="score"
           headerTitle="用户列表"
           dataSource={ranks}//原请求数据函数
-          pagination={{
-            pageSize: 10,
-          }}
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record), // 点击行时调用 handleRowClick
-          })}
+          pagination={false}
           columns={[
             {
               title: '头像',
@@ -146,9 +176,22 @@ const App: React.FC = () => {
               title: '公开仓库数',
               dataIndex: 'publicRepos',
             },
+            {
+              title:'TA关注的',
+              dataIndex:'accountfollowing',
+            },
+            {
+              title:'TA的粉丝',
+              dataIndex: 'accountfollowing',
+            },
+            {
+              title:'分数',
+              dataIndex: 'score',
+            }
           ]}
         />
       </div>
+      <Footer />
     </div>
   );
 };
