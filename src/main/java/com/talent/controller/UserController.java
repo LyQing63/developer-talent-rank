@@ -55,7 +55,7 @@ public class UserController {
         }
 
         HttpResponse response = HttpRequest.post(GITHUB_TOKEN)
-                .setSSLProtocol("TLSv1.2")
+//                .setSSLProtocol("TLSv1.2")
                 .form("client_id", clientId)
                 .form("client_secret", clientSecret)
                 .form("code", code)
