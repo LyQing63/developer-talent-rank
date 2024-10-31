@@ -6,6 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.talent.model.dto.DeveloperAnalysis">
             <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="login" column="login" jdbcType="VARCHAR"/>
             <result property="totalranking" column="totalRanking" jdbcType="INTEGER"/>
             <result property="biorating" column="bioRating" jdbcType="INTEGER"/>
             <result property="repodescriptionrating" column="repoDescriptionRating" jdbcType="INTEGER"/>
@@ -17,7 +18,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,totalRanking,bioRating,
+        id,totalRanking,bioRating,login,
         repoDescriptionRating,webpageRating,backlinkRating,
         userPopularity,repoPopularity,locationConfidence
     </sql>

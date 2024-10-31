@@ -23,6 +23,7 @@ public class DeveloperAnalysis implements Serializable {
     @TableId
     private Long id;
 
+    private  String login;
     /**
      * 排名分数
      */
@@ -79,14 +80,15 @@ public class DeveloperAnalysis implements Serializable {
         }
         DeveloperAnalysis other = (DeveloperAnalysis) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
-            && (this.getTotalranking() == null ? other.getTotalranking() == null : this.getTotalranking().equals(other.getTotalranking()))
-            && (this.getBiorating() == null ? other.getBiorating() == null : this.getBiorating().equals(other.getBiorating()))
-            && (this.getRepodescriptionrating() == null ? other.getRepodescriptionrating() == null : this.getRepodescriptionrating().equals(other.getRepodescriptionrating()))
-            && (this.getWebpagerating() == null ? other.getWebpagerating() == null : this.getWebpagerating().equals(other.getWebpagerating()))
-            && (this.getBacklinkrating() == null ? other.getBacklinkrating() == null : this.getBacklinkrating().equals(other.getBacklinkrating()))
-            && (this.getUserpopularity() == null ? other.getUserpopularity() == null : this.getUserpopularity().equals(other.getUserpopularity()))
-            && (this.getRepopopularity() == null ? other.getRepopopularity() == null : this.getRepopopularity().equals(other.getRepopopularity()))
-            && (this.getLocationconfidence() == null ? other.getLocationconfidence() == null : this.getLocationconfidence().equals(other.getLocationconfidence()));
+                && (this.getTotalranking() == null ? other.getTotalranking() == null : this.getTotalranking().equals(other.getTotalranking()))
+                && (this.getBiorating() == null ? other.getBiorating() == null : this.getBiorating().equals(other.getBiorating()))
+                && (this.getRepodescriptionrating() == null ? other.getRepodescriptionrating() == null : this.getRepodescriptionrating().equals(other.getRepodescriptionrating()))
+                && (this.getWebpagerating() == null ? other.getWebpagerating() == null : this.getWebpagerating().equals(other.getWebpagerating()))
+                && (this.getBacklinkrating() == null ? other.getBacklinkrating() == null : this.getBacklinkrating().equals(other.getBacklinkrating()))
+                && (this.getUserpopularity() == null ? other.getUserpopularity() == null : this.getUserpopularity().equals(other.getUserpopularity()))
+                && (this.getRepopopularity() == null ? other.getRepopopularity() == null : this.getRepopopularity().equals(other.getRepopopularity()))
+                && (this.getLocationconfidence() == null ? other.getLocationconfidence() == null : this.getLocationconfidence().equals(other.getLocationconfidence()))
+                && (this.getLogin() == null ? other.getLogin() == null : this.getLogin().equals(other.getLogin()));
     }
 
     @Override
@@ -102,6 +104,7 @@ public class DeveloperAnalysis implements Serializable {
         result = prime * result + ((getUserpopularity() == null) ? 0 : getUserpopularity().hashCode());
         result = prime * result + ((getRepopopularity() == null) ? 0 : getRepopopularity().hashCode());
         result = prime * result + ((getLocationconfidence() == null) ? 0 : getLocationconfidence().hashCode());
+        result = prime * result + ((getLogin() == null) ? 0 : getLogin().hashCode());
         return result;
     }
 
@@ -120,15 +123,17 @@ public class DeveloperAnalysis implements Serializable {
         sb.append(", userpopularity=").append(userpopularity);
         sb.append(", repopopularity=").append(repopopularity);
         sb.append(", locationconfidence=").append(locationconfidence);
+        sb.append(", login=").append(login);
         sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");
         return sb.toString();
     }
 
-    public static DeveloperAnalysis parseRatingResultVO(Long id, UserRating userRating, Integer totalScore) {
+    public static DeveloperAnalysis parseRatingResultVO(Long id, String login, UserRating userRating, Integer totalScore) {
 
         DeveloperAnalysis developerAnalysis = new DeveloperAnalysis();
         developerAnalysis.setId(id);
+        developerAnalysis.setLogin(login);
         developerAnalysis.setTotalranking(totalScore);
         developerAnalysis.setBiorating(userRating.getRating().getBioRating());
         developerAnalysis.setRepodescriptionrating(userRating.getRating().getRepoDescriptionRating());

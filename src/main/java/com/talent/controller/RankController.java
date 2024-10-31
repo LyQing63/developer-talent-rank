@@ -20,15 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author 郑皓天
@@ -95,7 +93,7 @@ public class RankController {
         ratingResultVO.setTotalScore(totalScore);
 
         // 存入数据库中
-        DeveloperAnalysis developerAnalysis = DeveloperAnalysis.parseRatingResultVO(developer.getId(), userRating, totalScore);
+        DeveloperAnalysis developerAnalysis = DeveloperAnalysis.parseRatingResultVO(developer.getId(), developer.getLogin(), userRating, totalScore);
         boolean save = developerAnalysisService.saveOrUpdate(developerAnalysis);
         if (!save) {
             return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "存储开发者分析数据出错");
@@ -163,6 +161,25 @@ public class RankController {
         zSetOperations.removeRange(TOTAL_RANK_KEY, 0, -11);
     }
 
+    private void saveDataToRedisByParam(List<DeveloperAnalysis> dataList, String param, String value, String token) {
+
+        ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();
+
+        if ("nation".equals(param)) {
+            dataList = dataList.stream().filter((data) -> {
+                User userInfo = userService.getUserInfo(data.getLogin(), token);
+                return userInfo.getLocation().equals(value);
+            }).collect(Collectors.toList());
+        }
+
+        for (DeveloperAnalysis data : dataList) {
+            // 将每条数据按 totalscore 字段排序存入 Redis
+            zSetOperations.add(TOTAL_RANK_KEY, data, data.getTotalranking());
+        }
+
+        zSetOperations.removeRange(TOTAL_RANK_KEY, 0, -11);
+    }
+
     @GetMapping("/totalRating")
     public BaseResponse getTotalRating(@RequestHeader(value = "Authorization") String authorization) {
         String token = TokenUtils.getToken(authorization);
@@ -182,6 +199,29 @@ public class RankController {
             developerAnalysisList.add(byId);
         }
         saveDataToRedis(developerAnalysisList);
+        Set<Object> rank = redisTemplate.opsForZSet().reverseRange(TOTAL_RANK_KEY, 0, 9);
+        return ResultUtils.success(rank);
+    }
+
+    @PostMapping("/totalRating")
+    public BaseResponse getTotalRatingByParam(String param, String value, @RequestHeader(value = "Authorization") String authorization) {
+        String token = TokenUtils.getToken(authorization);
+        if (token == null) {
+            return ResultUtils.error(ErrorCode.PARAMS_ERROR, "未登录");
+        }
+        // 用户限流，对token进行
+        redisLimiterManager.doRateLimiter(token);
+
+        List<User> list = userService.list();
+        List<DeveloperAnalysis> developerAnalysisList = new ArrayList<>();
+        for (User developer : list) {
+            DeveloperAnalysis byId = developerAnalysisService.getById(developer.getId());
+            if (byId == null) {
+                continue;
+            }
+            developerAnalysisList.add(byId);
+        }
+        saveDataToRedisByParam(developerAnalysisList, param, value, token);
         Set<Object> rank = redisTemplate.opsForZSet().reverseRange(TOTAL_RANK_KEY, 0, 9);
         return ResultUtils.success(rank);
     }
