@@ -2,6 +2,7 @@
 import type { RequestConfig } from '@umijs/max';
 import { message, notification } from 'antd';
 import {getInitialState} from "@/app";
+import {useModel} from "@@/exports";
 
 // 错误处理方案： 错误类型
 enum ErrorShowType {
@@ -89,20 +90,16 @@ export const errorConfig: RequestConfig = {
   requestInterceptors: [
     (config: RequestOptions) => {
       // 拦截请求配置，进行个性化处理。
-
-      // 此处为拦截器，每次发送请求之前判断能否取到token
-      getInitialState().then((r) => {
-          if (r.token === null) {
-            return;
-          }
-          const headers = {
-            'Authorization': `Bearer ${r.token}`,
-          };
-          config.headers = {
-            ...headers
-          }
-        }
-      )
+      const token = localStorage.getItem("token");
+      if (token === null) {
+        return { ...config };
+      }
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+      };
+      config.headers = {
+        ...headers
+      }
       return { ...config };
     },
   ],

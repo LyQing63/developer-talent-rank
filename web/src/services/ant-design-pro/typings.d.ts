@@ -18,10 +18,11 @@ declare namespace API {
   };
 
   type getDeveloperParams = {
-    login: string;
+    login?: string;
+    id?: number;
   };
 
-  type getScoreParams = {
+  type getRatingResultParams = {
     account: string;
   };
 
