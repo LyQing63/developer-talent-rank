@@ -38,6 +38,7 @@ create table if not exists user
 create table if not exists developer_analysis
 (
     id  bigint  not null comment 'id' primary key,
+    login       varchar(64)         not null comment '用户名',
     totalRanking int                null comment '排名分数',
     bioRating   int                null comment 'bio 评分',
     repoDescriptionRating int null comment 'repo_description 评分',
