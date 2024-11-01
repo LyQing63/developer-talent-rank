@@ -121,8 +121,6 @@ public class UserController {
         }
         User userInfo;
         String token = TokenUtils.getToken(authorization);
-        // 用户限流，对token进行
-        redisLimiterManager.doRateLimiter(token);
 
         if (!StringUtils.isAnyBlank(login)) {
             userInfo = userService.getUserInfo(login, token);

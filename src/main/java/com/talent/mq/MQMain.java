@@ -23,7 +23,6 @@ public class MQMain {
             channel1.queueDeclare(RabbitMQConstant.AI_QUEUE_NAME, true, false, false, null);
             channel1.queueBind(RabbitMQConstant.AI_QUEUE_NAME, RabbitMQConstant.AI_EXCHANGE_NAME, RabbitMQConstant.AI_ROUTING_KEY);
 
-
         } catch (Exception e) {
 
         }

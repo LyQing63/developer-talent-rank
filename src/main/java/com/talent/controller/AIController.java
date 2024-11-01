@@ -53,6 +53,7 @@ public class AIController {
         }
 
         DescriptionVO description = (DescriptionVO) redisManager.getTaskStatusInfo(id);
+        //TODO 任务生成失败
         if (description == null) {
             return ResultUtils.error(ErrorCode.PARAMS_ERROR, "任务尚未完成");
         }

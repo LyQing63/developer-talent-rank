@@ -52,6 +52,8 @@ public class DescriptionVO implements Serializable {
 
     private String area;
 
+    private String country;
+
     /**
      * 住址
      */
@@ -111,6 +113,7 @@ public class DescriptionVO implements Serializable {
         descriptionVO.setBio(developer.getBio());
         descriptionVO.setProfile(description.getStr("profile"));
         descriptionVO.setArea(description.getStr("area"));
+        descriptionVO.setCountry(description.getStr("country"));
         descriptionVO.setLocation(developer.getLocation());
         descriptionVO.setEmail(developer.getEmail());
         descriptionVO.setHireable(developer.getHireable());

@@ -35,7 +35,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         JSONObject developerInfo = gitHubDeveloperRankUtils.getDeveloperInfo(account, token);
 
-        if (developerInfo.get("status") != "404") {
+        if (developerInfo.get("status") == "404") {
             return null;
         }
 

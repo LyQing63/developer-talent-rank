@@ -61,9 +61,6 @@ public class RankController {
 
         String token = TokenUtils.getToken(authorization);
 
-        // 用户限流，对token进行
-        redisLimiterManager.doRateLimiter(token);
-
         // 从redis缓存中读取
         RatingResultVO developerRankingInfo = (RatingResultVO) redisManager.getDeveloperRankingInfo(account);
         if (developerRankingInfo != null) {
@@ -186,8 +183,6 @@ public class RankController {
         if (token == null) {
             return ResultUtils.error(ErrorCode.PARAMS_ERROR, "未登录");
         }
-        // 用户限流，对token进行
-        redisLimiterManager.doRateLimiter(token);
 
         List<User> list = userService.list();
         List<DeveloperAnalysis> developerAnalysisList = new ArrayList<>();
@@ -209,8 +204,6 @@ public class RankController {
         if (token == null) {
             return ResultUtils.error(ErrorCode.PARAMS_ERROR, "未登录");
         }
-        // 用户限流，对token进行
-        redisLimiterManager.doRateLimiter(token);
 
         List<User> list = userService.list();
         List<DeveloperAnalysis> developerAnalysisList = new ArrayList<>();

@@ -90,6 +90,7 @@ public class Consumer {
         String id = messages[2];
 
         String description = aiService.getDescription(login, token);
+        log.info(description);
         JSONObject desJSON = new JSONObject(description);
         User userInfo = userService.getUserInfo(login, token);
 
