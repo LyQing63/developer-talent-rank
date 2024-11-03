@@ -32,3 +32,18 @@ export async function getTotalRating(options?: { [key: string]: any }) {
     ...(options || {}),
   });
 }
+
+/** 此处后端没有提供注释 POST /rank/totalRating */
+export async function getTotalRatingByParam(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getTotalRatingByParamParams,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponse>('/api/rank/totalRating', {
+    method: 'POST',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}

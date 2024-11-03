@@ -2,8 +2,6 @@
 /* eslint-disable */
 import { request } from '@umijs/max';
 
-
-
 /** 此处后端没有提供注释 GET /login/currentUser */
 export async function currentUser(options?: { [key: string]: any }) {
   return request<API.BaseResponseUser>('/api/login/currentUser', {

@@ -17,6 +17,14 @@ declare namespace API {
     message?: string;
   };
 
+  type createDescriptionParams = {
+    login: string;
+  };
+
+  type getDescriptionParams = {
+    id: string;
+  };
+
   type getDeveloperParams = {
     login?: string;
     id?: number;
@@ -24,6 +32,11 @@ declare namespace API {
 
   type getRatingResultParams = {
     account: string;
+  };
+
+  type getTotalRatingByParamParams = {
+    param: string;
+    value: string;
   };
 
   type loginParams = {
