@@ -1,15 +1,16 @@
-import { AudioOutlined } from '@ant-design/icons';
-import {ProList, ProTable} from '@ant-design/pro-components';
-import type { GetProps } from 'antd';
-import { Button, Input, Space, Tag } from 'antd';
-import React, {useEffect, useState} from 'react';
-import request from 'umi-request';
+import { AudioOutlined, PlusOutlined } from '@ant-design/icons';
+import { ModalForm, ProTable } from '@ant-design/pro-components';
+import {GetProps, message} from 'antd';
+import { Button, Input, Space, Tag} from 'antd';
+import React, { useEffect, useState } from 'react';
 import styles from './index.less';
-import {getDeveloper} from "@/services/ant-design-pro/userController";
-import {getTotalRating} from "@/services/ant-design-pro/rankController";
-import user from "../../../mock/user";
-import Footer from "@/components/Footer";
-
+import { getDeveloper } from '@/services/ant-design-pro/userController';
+import { getTotalRating } from '@/services/ant-design-pro/rankController';
+import Footer from '@/components/Footer';
+import { ProCard, StatisticCard } from '@ant-design/pro-components';
+import RcResizeObserver from 'rc-resize-observer';
+import ShowForm from "@/pages/Search/components/ShowForm";
+import {createDescription} from "@/services/ant-design-pro/aiController";
 type SearchProps = GetProps<typeof Input.Search>;
 
 type RankedUser= {
@@ -34,8 +35,13 @@ type RankedUser= {
   score: number
 };
 
+type History= {
+  login?: string;
+  taskId?: number;
+}
 
 const { Search: Index } = Input;
+const { Statistic } = StatisticCard;
 
 const suffix = (
   <AudioOutlined
@@ -46,9 +52,8 @@ const suffix = (
   />
 );
 
-const onSearch: SearchProps['onSearch'] = (value, _e, info) => console.log(info?.source, value);
 
-const MySearch: React.FC = () => (
+const MySearch: React.FC = (props) => (
   <Space
     direction="vertical"
     style={{
@@ -67,24 +72,73 @@ const MySearch: React.FC = () => (
         justifyContent: 'space-between',
       }}
       suffix={suffix}
-      onSearch={onSearch}
+      onSearch={props.onSearch}
       className={styles.myinput}
     />
+
   </Space>
+
 );
+
 
 
 const App: React.FC = () => {
   const [ranks, setRanks] = useState<RankedUser[]>([]);
   const [loading, setLading] = useState<boolean>(true);
-  // const MyTable: React.FC = ({ style }: MyTableP rops) => (
-  //
-  // );
+  const [responsive, setResponsive] = useState(false);
+// 新增：用于控制 ShowForm 组件的显示状态
+  const [showFormVisible, setShowFormVisible] = useState<boolean>(false); // 控制 ShowForm 显示的状态
+  const [taskId, setTaskId] = useState<string>();
+  const [searchHistory, setSearchHistory] = useState<History[]>([]); // 存储搜索历史记录
+  const [searchValue, setSearchValue] = useState<string>(''); // 管理搜索框内容
 
-
-  const handleSearch = (value: string) => {
+  const handleSearch = async (value: string) => {
     console.log('搜索内容:', value);
     // 这里可以添加你需要的搜索逻辑
+    if (!value.trim()) {
+      message.warning('请键入要查询的用户'); // 提示用户输入内容
+      return;
+    }
+    const existingHistory = searchHistory.find(item => item.login === value);    // 检查搜索历史中是否已存在搜索内容
+    if (!existingHistory){
+      try {
+        // 调用 createDescription 函数
+        const response = await createDescription({ login: value }); //调试页面暂时注释，记得改回来
+        if (response.code === 0) {
+          const id = response.data; // 假设返回的数据中包含 taskId
+          console.log('任务 ID:', id);
+          // 更新搜索历史
+          setSearchHistory([...searchHistory, { login: value, taskId: id }]);
+          setSearchValue(''); // 清空搜索框内容
+          setTaskId(id);
+          setShowFormVisible(true); // 点击搜索按钮后显示 ModalForm
+        } else {
+          message.error('请求失败，请重试'); // 处理请求失败的情况
+        }
+      } catch (error) {
+        message.error('请求出错，请检查网络'); // 处理请求错误
+        console.error(error);
+      }
+
+    }
+    else {
+      const taskId = existingHistory.taskId;
+      setTaskId(taskId);
+      setShowFormVisible(true); // 点击搜索按钮后显示 ModalForm
+      // 如果需要可以直接使用 existingHistory.taskId
+    };
+
+
+
+
+  };
+  // 处理点击历史记录标签的搜索
+  const handleHistorySearch = (item: History) => {
+    // console.log(item)
+    setSearchValue(item.login); // 更新搜索框内容
+    setTaskId(item.taskId);
+    setShowFormVisible(true);
+    // 这里可以执行重新搜索的逻辑，例如通过 taskId 获取更多信息
   };
 
   const handleRowClick = (record: API.User) => {
@@ -98,7 +152,7 @@ const App: React.FC = () => {
       const fetchUsers = async () => {
 
         const response = await getTotalRating();
-
+        console.log(response)
         if (response.code === 0) {
           const rankResult = response.data;
 
@@ -122,17 +176,42 @@ const App: React.FC = () => {
   }, []);
 
   return (
+
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
       justifyContent: 'flex-start',
-      overflow: 'auto' ,
+      overflow: 'auto',
     }}>
+      {showFormVisible &&
+        <ShowForm showFormVisible={showFormVisible} setShowFormVisible={setShowFormVisible} taskId={taskId}/>}
       <div>
-        <MySearch onSearch={handleSearch} />
+        <MySearch onSearch={handleSearch}/>
       </div>
-
+      <div style={{marginLeft: '15vh', display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+        {searchHistory.map((item, index) => (
+          <Button
+            key={index}
+            type="default"
+            onClick={() => handleHistorySearch(item)} // 点击历史记录再次搜索
+            onMouseEnter={(e) => e.currentTarget.style.cursor = 'pointer'}
+            onMouseLeave={(e) => e.currentTarget.style.cursor = 'default'}
+          >
+            {item.login}
+            <span
+              style={{marginLeft: 8, color: 'red', cursor: 'pointer'}}
+              onClick={(e) => {
+                e.stopPropagation(); // 阻止按钮点击事件
+                const updatedHistory = searchHistory.filter((_, i) => i !== index);
+                setSearchHistory(updatedHistory); // 删除历史记录
+              }}
+            >
+              × {/* 关闭图标，可以替换为更合适的图标 */}
+            </span>
+          </Button>
+        ))}
+      </div>
       <div
         style={{
           width: '85%',
@@ -162,7 +241,7 @@ const App: React.FC = () => {
             {
               title: '头像',
               dataIndex: 'avatarurl',
-              render: (avatarurl) => <img src={avatarurl} alt="头像" style={{ width: 40, borderRadius: '50%' }} />,
+              render: (avatarurl) => <img src={avatarurl} alt="头像" style={{width: 40, borderRadius: '50%'}}/>,
             },
             {
               title: '用户名',
@@ -177,21 +256,160 @@ const App: React.FC = () => {
               dataIndex: 'publicRepos',
             },
             {
-              title:'TA关注的',
-              dataIndex:'accountfollowing',
-            },
-            {
-              title:'TA的粉丝',
+              title: 'TA关注的',
               dataIndex: 'accountfollowing',
             },
             {
-              title:'分数',
+              title: 'TA的粉丝',
+              dataIndex: 'accountfollowing',
+            },
+            {
+              title: '分数',
               dataIndex: 'score',
-            }
+            },
+            {
+              title: '操作',
+              dataIndex: 'action',
+              render: (_, record) => (
+                <ModalForm<{
+                  name: string;
+                  company: string;
+                }>
+
+                  title="新建表单"
+                  trigger={
+                    <Button
+                      type="primary"
+                      onClick={(e) => {
+                        e.stopPropagation(); // 阻止事件冒泡
+
+                      }}
+                    >
+                      <PlusOutlined/>
+                      查看详细信息
+                    </Button>
+                  }
+                  autoFocusFirstInput
+                  modalProps={{
+                    destroyOnClose: true,
+                    onCancel: (e) => {
+                      e.stopPropagation(); // 阻止事件冒泡
+                      console.log('Modal closed');
+                    },
+                  }}
+                  submitTimeout={2000}
+                > <RcResizeObserver
+                  key="resize-observer"
+                  onResize={(offset) => {
+                    setResponsive(offset.width < 596);
+                  }}
+                >
+                  <ProCard split="horizontal">
+                    <ProCard split="horizontal">
+                      <ProCard split="vertical">
+                        <StatisticCard
+                          chart={
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <img
+                                src={record.avatarurl || 'https://via.placeholder.com/40'} // 占位符图像
+                                alt="头像"
+                                style={{ width: 80, height: 80, borderRadius: '50%', marginRight: 8 }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: '30px', lineHeight: '1.5'
+                                }}
+                              >{record.login || '暂无相关信息'}</span>
+                            </div>
+                          }
+                        />
+
+                      </ProCard>
+                      <StatisticCard
+                        chart={
+                          <div>
+                            <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>公司/所属组织</div>
+                            <span style={{ fontSize: '16px' }}>
+                                {record.company || '暂无相关信息'}
+                            </span>
+                          </div>
+                        }
+                      />
+
+                      <ProCard split="vertical">
+                        <StatisticCard
+                          chart={
+                            <div>
+                              <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>博客地址</div>
+                              {record.blog ? (
+                                <a href={record.blog} target="_blank" rel="noopener noreferrer" style={{ fontSize: '16px' }}>
+                                  {record.blog}
+                                </a>
+                              ) : (
+                                <span style={{ fontSize: '16px' }}>暂无相关信息</span>
+                              )}
+                            </div>
+                          }
+                        />
+
+                        <StatisticCard
+                          chart={
+                            <div>
+                              <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>开发技术领域</div>
+                                <span style={{ fontSize: '16px' }}>
+                                  {record.area || '暂无相关信息'}
+                                </span>
+                              </div>
+                          }
+                        />
+
+                        <StatisticCard
+                          chart={
+                            <div>
+                              <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>国籍</div>
+                              <span style={{ fontSize: '16px' }}>
+                                  {record.country || '暂无相关信息'}
+                              </span>
+                            </div>
+                          }
+                        />
+
+                      </ProCard>
+                    </ProCard>
+
+                    <ProCard split="horizontal">
+                      <StatisticCard
+                        chart={
+                          <div>
+                            <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>简介</div>
+                            <span style={{ fontSize: '16px' }}>
+                                {record.profile || '暂无相关信息'}
+                            </span>
+                          </div>
+                        }
+                      />
+
+
+                    </ProCard>
+                    <StatisticCard
+                      chart={
+                          <img
+                            src={`https://github-readme-stats.vercel.app/api?username=${record.login}&show=reviews,discussions_started,discussions_answered,prs_merged,prs_merged_percentage&locale=cn&card_width=500px`}
+                            width="100%"
+                          />
+
+                      }
+                    />
+
+                  </ProCard>
+                </RcResizeObserver>
+                </ModalForm>
+              ),
+            },
           ]}
         />
       </div>
-      <Footer />
+      <Footer/>
     </div>
   );
 };
