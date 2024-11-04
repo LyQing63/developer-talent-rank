@@ -14,6 +14,7 @@ import { flushSync } from 'react-dom';
 import { createStyles } from 'antd-style';
 import { login } from '@/services/ant-design-pro/userController';
 import Particles from "react-particles-js";
+import ParticlesBg from 'particles-bg'
 document.title="Github Talent Rank"
 
 
@@ -200,6 +201,7 @@ const Login: React.FC = () => {
           }}
         ></LoginForm>
       </div>
+      <ParticlesBg type="circle" bg={true} />
       <Footer/>
     </div>
   );
