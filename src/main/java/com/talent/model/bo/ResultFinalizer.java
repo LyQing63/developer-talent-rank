@@ -49,7 +49,7 @@ public class ResultFinalizer {
         // 反向链接和信息
         result.add(new RatingVO("反向链接和信息",
                 "提供有关您自己的基本信息，例如您目前的公司、电子邮件地址以及您的作品集、GitLab、CodePen 或博客的链接。",
-                (int) (rating.getBacklinkRating() * 0.5), suggestions.getBacklinks()));
+                (int) ((rating.getBacklinkRating() + 60) * 0.5), suggestions.getBacklinks()));
 
         // 提供网页
         result.add(new RatingVO("提供网页",

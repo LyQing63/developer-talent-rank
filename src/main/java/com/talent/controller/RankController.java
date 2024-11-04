@@ -135,12 +135,12 @@ public class RankController {
             ratingResultVO.setRatingResults(ratingResults);
             ratingResultVO.setTotalScore(totalScore);
 
-            // 存入数据库中
-//            DeveloperAnalysis developerAnalysis = DeveloperAnalysis.parseRatingResultVO(developer.getId(), userRating, totalScore);
-//            boolean save = developerAnalysisService.saveOrUpdate(developerAnalysis);
-//            if (!save) {
-//                return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "存储开发者分析数据出错");
-//            }
+//             存入数据库中
+            DeveloperAnalysis developerAnalysis = DeveloperAnalysis.parseRatingResultVO(developerInfo.getId(), login, userRating, totalScore);
+            boolean save = developerAnalysisService.saveOrUpdate(developerAnalysis);
+            if (!save) {
+                return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "存储开发者分析数据出错");
+            }
         }
         userService.addUsers(developers);
         return ResultUtils.success(developers);
