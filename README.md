@@ -52,23 +52,23 @@
 申请的过程官方文档的版本比较早期，所以不建议看官方文档，但是其中的 api 接口应当选择官方文档
 
 1. 进入 Settings 界面
-   ![](doc/img_0.png)
+![](doc/img_0.png)
 2. 选择 Developer settings 选项
-   ![](doc/img_1.png)
+![](doc/img_1.png)
 3. 选择到 OAuth Apps 目录中，点击 New OAuth App
-   ![](doc/img_2.png)
+![](doc/img_2.png)
 4. 填写项目描述
-   ![](doc/img_3.png)
-   其中 Authorization callback URL 表示当授权登录之后跳转回来的页面
+![](doc/img_3.png)
+其中 Authorization callback URL 表示当授权登录之后跳转回来的页面
 
 ### 开通 Github token
 
 同样到 Developer settings 选项
 
 1. 选择到 Personal access tokens 下的 Tokens (classic) 选项下，点击按钮 Generate new token，以及 Generate new token (classic)
-   ![](doc/img_4.png)
+![](doc/img_4.png)
 2. 填写信息，然后保存 token
-   ![](doc/img_5.png)
+![](doc/img_5.png)
 
 ### 配置项目
 
