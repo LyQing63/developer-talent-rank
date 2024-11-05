@@ -1,6 +1,6 @@
 import {ModalForm, ProCard, StatisticCard} from '@ant-design/pro-components';
 import RcResizeObserver from 'rc-resize-observer';
-import {Form} from 'antd';
+import {Form, message} from 'antd';
 import React, {useState} from 'react';
 import {getDescription} from "@/services/ant-design-pro/aiController";
 import { Spin } from 'antd'; // 确保导入 Spin 组件
@@ -26,8 +26,9 @@ export default (props) => {
     const response = await getDescription({id: id});
     console.log(response)
     if (response.code === 0) {
-      setDescription(response.data)
-      return true
+      // 检查 country 是否匹配 filterValue
+        setDescription(response.data);
+        return true;
     }
     return false
   }
@@ -50,6 +51,8 @@ export default (props) => {
                 setLoadingDescription(false); // 结束加载
                 break; // 如果返回true，终止循环
               }
+
+              console.log(result)
               await new Promise((resolve) => {
                 setTimeout(resolve, 3000);
               }); // 等待1秒
