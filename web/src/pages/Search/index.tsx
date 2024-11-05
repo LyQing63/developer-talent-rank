@@ -5,7 +5,7 @@ import { Button, Input, Space, Tag} from 'antd';
 import React, { useEffect, useState } from 'react';
 import styles from './index.less';
 import { getDeveloper } from '@/services/ant-design-pro/userController';
-import { getTotalRating } from '@/services/ant-design-pro/rankController';
+import {getTotalRating, getTotalRatingByParam} from '@/services/ant-design-pro/rankController';
 import Footer from '@/components/Footer';
 import { ProCard, StatisticCard } from '@ant-design/pro-components';
 import RcResizeObserver from 'rc-resize-observer';
@@ -91,6 +91,124 @@ const App: React.FC = () => {
   const [taskId, setTaskId] = useState<string>();
   const [searchHistory, setSearchHistory] = useState<History[]>([]); // 存储搜索历史记录
   const [searchValue, setSearchValue] = useState<string>(''); // 管理搜索框内容
+  const [filterValue, setFilterValue] = useState<string>(''); // 新增状态变量，用于存储筛选框内容
+
+  // 更新筛选框输入值
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterValue(e.target.value);
+  };
+
+  // 筛选框的确定按钮点击事件
+  // const handleFilterConfirm = () => {
+  //   if (!filterValue.trim()) {
+  //     message.info('开启全局搜索'); // 提示全局搜索
+  //     setFilterValue(''); // 清空筛选值
+  //   } else {
+  //     message.info(`设置筛选条件国家/地区为 ${filterValue}`); // 提示筛选条件
+  //   }
+  // };
+
+  // const fetchUsers = async () => {
+  //   setLading(true); // 设置加载状态
+  //   try {
+  //     const response = await getTotalRating();
+  //     if (response.code === 0) {
+  //       const rankResult = response.data;
+  //
+  //       const userPromises = rankResult.map(async (rank: any) => {
+  //         const devResponse = await getDeveloper({ id: rank.id });
+  //         return {
+  //           ...devResponse.data,
+  //           score: rank.totalranking,
+  //         } as RankedUser;
+  //       });
+  //       const users = await Promise.all(userPromises);
+  //       const sortedUsers = users.sort((a, b) => b.score - a.score);
+  //       setRanks(sortedUsers); // 更新数据
+  //     } else {
+  //       message.error('获取数据失败');
+  //     }
+  //   } catch (error) {
+  //     message.error('请求出错，请检查网络');
+  //     console.error(error);
+  //   } finally {
+  //     setLading(false); // 关闭加载状态
+  //   }
+  // };
+
+  const fetchUsers = async () => {
+    setRanks([])
+    const response = await getTotalRating();
+    console.log(response)
+    if (response.code === 0) {
+      const rankResult = response.data;
+      const userPromises = rankResult.map(async (rank: any) => {
+        const devResponse = await getDeveloper({ id: rank.id });
+        return {
+          ...devResponse.data,
+          score: rank.totalranking,
+        } as RankedUser;
+      });
+      // 等待所有 Promise 完成
+      const users = await Promise.all(userPromises);
+
+      // 根据 score 降序排序
+      const sortedUsers = users.sort((a, b) => b.score - a.score);
+      setRanks(sortedUsers); // 更新状态
+      setLading(false)
+    }
+  }
+
+
+  const handleFilterConfirm = async () => {
+    if (!filterValue.trim()) {
+      message.info('开启全局搜索');
+      fetchUsers();
+    } else {
+      message.info(`设置筛选条件国家/地区为 ${filterValue}`);
+      setLading(true);
+      setRanks([]);
+      try {
+
+        // 构建请求参数
+        const params = { param: 'nation', value: filterValue }; // 使用正确的参数结构
+        console.log('请求参数:', params); // 输出请求参数
+
+        // 使用筛选条件请求数据
+        const response = await getTotalRatingByParam(params);
+        console.log('后端返回的响应:', response); // 输出后端返回的完整响应
+
+        console.log(filterValue)
+        if (response.code === 0) {
+          const rankResult = response.data;
+          const userPromises = rankResult.map(async (rank: any) => {
+            const devResponse = await getDeveloper({ id: rank.id });
+            return {
+              ...devResponse.data,
+              score: rank.totalranking,
+            } as RankedUser;
+          });
+          // 等待所有 Promise 完成
+          const users = await Promise.all(userPromises);
+
+          // 根据 score 降序排序
+          const sortedUsers = users.sort((a, b) => b.score - a.score);
+          setRanks(sortedUsers); // 更新状态
+          setLading(false)
+        } else {
+          message.error('请求筛选数据失败');
+        }
+      } catch (error) {
+        message.error('请求出错，请检查网络');
+        console.error(error);
+      } finally {
+        setLading(false);
+      }
+    }
+  };
+
+
+
 
   const handleSearch = async (value: string) => {
     console.log('搜索内容:', value);
@@ -103,7 +221,7 @@ const App: React.FC = () => {
     if (!existingHistory){
       try {
         // 调用 createDescription 函数
-        const response = await createDescription({ login: value }); //调试页面暂时注释，记得改回来
+        const response = await createDescription({ login: value });
         if (response.code === 0) {
           const id = response.data; // 假设返回的数据中包含 taskId
           console.log('任务 ID:', id);
@@ -147,33 +265,14 @@ const App: React.FC = () => {
     }
   };
 
+
+
   useEffect(() => {
 
-      const fetchUsers = async () => {
-
-        const response = await getTotalRating();
-        console.log(response)
-        if (response.code === 0) {
-          const rankResult = response.data;
-
-          const userPromises = rankResult.map(async (rank: any) => {
-            const devResponse = await getDeveloper({ id: rank.id });
-            return {
-              ...devResponse.data,
-              score: rank.totalranking,
-            } as RankedUser;
-          });
-          // 等待所有 Promise 完成
-          const users = await Promise.all(userPromises);
-
-          // 根据 score 降序排序
-          const sortedUsers = users.sort((a, b) => b.score - a.score);
-          setRanks(sortedUsers); // 更新状态
-          setLading(false)
-        }
-      }
     fetchUsers()
   }, []);
+
+  console.log(ranks)
 
   return (
 
@@ -185,7 +284,7 @@ const App: React.FC = () => {
       overflow: 'auto',
     }}>
       {showFormVisible &&
-        <ShowForm showFormVisible={showFormVisible} setShowFormVisible={setShowFormVisible} taskId={taskId}/>}
+        <ShowForm showFormVisible={showFormVisible} setShowFormVisible={setShowFormVisible} taskId={taskId} filterValue={filterValue} />}
       <div>
         <MySearch onSearch={handleSearch}/>
       </div>
@@ -212,6 +311,34 @@ const App: React.FC = () => {
           </Button>
         ))}
       </div>
+      <div>
+        <Space
+          style={{
+            display: 'flex',
+            justifyContent: 'right', // 水平居中
+            marginRight: '20vh',
+            alignItems: 'center',     // 垂直居中
+            height: '5vh',          // 让父容器高度占满视口
+          }}
+        >
+          <Index
+            placeholder="请输入要筛选的国家/地区"
+            enterButton="确定"
+            size="small"
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+
+            }}
+            allowClear
+            value={filterValue} // 绑定状态变量
+            onChange={handleFilterChange} // 更新筛选框内容
+            onSearch={handleFilterConfirm} // 确定按钮点击事件
+            className={styles.myselect}
+          />
+
+        </Space>
+      </div>
       <div
         style={{
           width: '85%',
@@ -219,20 +346,13 @@ const App: React.FC = () => {
         }}
       >
         <ProTable<RankedUser>
-          // className={styles.mytable}
-          toolBarRender={() => {
-            return [
-              <Button key="3" type="primary">
-                新建
-              </Button>,
-            ];
-          }}
+
           onRow={(record) => ({
             onClick: () => handleRowClick(record),
           })}
           loading={loading} // 控制加载状态
-          search={{}}
-          metaTitle="accountname"
+          search={false} // 隐藏整个搜索栏
+          // metaTitle="accountname"
           rowKey="score"
           headerTitle="用户列表"
           dataSource={ranks}//原请求数据函数
