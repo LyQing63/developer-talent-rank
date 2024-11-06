@@ -149,6 +149,8 @@ public class RankController {
     private void saveDataToRedis(List<DeveloperAnalysis> dataList) {
 
         ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();
+        // 移除旧的排名数据
+        zSetOperations.removeRange("TOTAL_RANK_KEY", 0, -1);  // 移除所有数据，或者根据需要指定范围
 
         for (DeveloperAnalysis data : dataList) {
             // 将每条数据按 totalscore 字段排序存入 Redis
@@ -161,11 +163,13 @@ public class RankController {
     private void saveDataToRedisByParam(List<DeveloperAnalysis> dataList, String param, String value, String token) {
 
         ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();
+        // 移除旧的排名数据
+        zSetOperations.removeRange("TOTAL_RANK_KEY", 0, -1);  // 移除所有数据，或者根据需要指定范围
 
         if ("nation".equals(param)) {
             dataList = dataList.stream().filter((data) -> {
                 User userInfo = userService.getUserInfo(data.getLogin(), token);
-                return userInfo.getLocation().equals(value);
+                return userInfo.getLocation() != null && userInfo.getLocation().equals(value);
             }).collect(Collectors.toList());
         }
 
