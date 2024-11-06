@@ -3,10 +3,7 @@
 一个开源的 github 账户评级工具。通过使用 github 官方 api 接口爬取数据以及开发者提供给的公开账户，并对这些数据进行 ai 分析，得到对这个开发者的技能描述以及所在国家。
 
 <p></p>
-<a href="https://www.usememos.com">Home Page</a> •
-<a href="https://demo.usememos.com/">Live Demo</a>
-
-![demo](https://www.usememos.com/demo.png)
+<a href="https://yjxx.oss-cn-nanjing.aliyuncs.com/img/202411061118608.mp4">Live Demo</a>
 
 ## 主要功能
 
